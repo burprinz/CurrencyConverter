@@ -28,17 +28,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.currencyconverter.ui.components.StatusBar
 import com.example.currencyconverter.ui.screens.AddCurrencyScreen
+import com.example.currencyconverter.ui.screens.CameraConvertScreen
 import com.example.currencyconverter.ui.screens.ConverterListScreen
 import com.example.currencyconverter.ui.screens.SelectScreen
 import com.example.currencyconverter.ui.screens.UnlockScreen
 import kotlinx.coroutines.launch
 
 enum class Screen(val title: String) {
-    LIST("List"),
-    FAVORITES("Favorites"),
-    SELECT("Select.."),
-    ADD_NEW("Add new"),
-    UNLOCK("Unlock")
+    LIST("Umrechnen"),
+    FAVORITES("Favoriten"),
+    SELECT("Währungen auswählen"),
+    ADD_NEW("Eigene Währung"),
+    UNLOCK("Fan-Währungen"),
+    CAMERA("Mit Kamera umrechnen")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +55,7 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
         drawerContent = {
             ModalDrawerSheet {
                 Text(
-                    "Currency Converter",
+                    "Währungsrechner",
                     style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(24.dp)
                 )
@@ -92,11 +94,12 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
         ) { padding ->
             Box(Modifier.padding(padding).fillMaxSize()) {
                 when (screen) {
-                    Screen.LIST -> ConverterListScreen(vm, favoritesOnly = false)
-                    Screen.FAVORITES -> ConverterListScreen(vm, favoritesOnly = true)
-                    Screen.SELECT -> SelectScreen(vm)
-                    Screen.ADD_NEW -> AddCurrencyScreen(vm)
+                    Screen.LIST -> ConverterListScreen(vm, favoritesOnly = false, onSelectCurrencies = { screen = Screen.SELECT })
+                    Screen.FAVORITES -> ConverterListScreen(vm, favoritesOnly = true, onSelectCurrencies = { screen = Screen.SELECT })
+                    Screen.SELECT -> SelectScreen(vm, onDone = { screen = Screen.LIST })
+                    Screen.ADD_NEW -> AddCurrencyScreen(vm, onGoToConverter = { screen = Screen.LIST })
                     Screen.UNLOCK -> UnlockScreen(vm)
+                    Screen.CAMERA -> CameraConvertScreen(vm)
                 }
             }
         }

@@ -15,6 +15,9 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,12 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.ui.MainViewModel
+import com.example.currencyconverter.ui.components.CurrencyFlag
 
 /** Select/deselect currencies and mark favorites. Two dropdown sections. */
 @Composable
-fun SelectScreen(vm: MainViewModel) {
+fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
-    var realOpen by rememberSaveable { mutableStateOf(false) }
+    var realOpen by rememberSaveable { mutableStateOf(true) }
     var customOpen by rememberSaveable { mutableStateOf(false) }
 
     val q = query.trim()
@@ -51,27 +55,40 @@ fun SelectScreen(vm: MainViewModel) {
     val customShown = customOpen || q.isNotEmpty()
 
     Column(Modifier.fillMaxSize()) {
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text("1. Wähle deine Währungen", style = MaterialTheme.typography.titleMedium)
+            Text("Setze ein Häkchen bei jeder Währung, die du vergleichen möchtest. Wenn du fertig bist, tippe auf „Fertig – zur Umrechnung“.", style = MaterialTheme.typography.bodyMedium)
+            Text("Der Stern markiert Favoriten.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            Button(onClick = onDone, modifier = Modifier.padding(top = 12.dp)) {
+                Text("Fertig – zur Umrechnung")
+            }
+        }
+    }
     OutlinedTextField(
         value = query,
         onValueChange = { query = it },
-        label = { Text("Search currencies") },
+        label = { Text("Währung suchen") },
         singleLine = true,
         modifier = Modifier.fillMaxWidth().padding(12.dp)
     )
     LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 16.dp)) {
-        item { SectionHeader("Currencies (${real.size})", realShown) { realOpen = !realOpen } }
+        item { SectionHeader("Währungen (${real.size})", realShown) { realOpen = !realOpen } }
         if (realShown) {
             if (real.isEmpty()) {
-                item { Hint("No currencies available. Connect to the internet and refresh the rates.") }
+                item { Hint("Keine Währungen verfügbar. Bitte prüfe die Internetverbindung und aktualisiere die Kurse.") }
             } else {
                 items(real, key = { it.id }) { c -> SelectRow(vm, c) }
             }
         }
 
-        item { SectionHeader("Custom / Fun (${custom.size})", customShown) { customOpen = !customOpen } }
+        item { SectionHeader("Eigene und Fan-Währungen (${custom.size})", customShown) { customOpen = !customOpen } }
         if (customShown) {
             if (custom.isEmpty()) {
-                item { Hint("Nothing here yet. Create your own under \"Add new\" or get fun currencies under \"Unlock\".") }
+                item { Hint("Hier ist noch nichts. Erstelle eine eigene Währung im Menü oder schalte Fan-Währungen frei.") }
             } else {
                 items(custom, key = { it.id }) { c -> SelectRow(vm, c) }
             }
@@ -93,7 +110,7 @@ private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit)
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Icon(
                 if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                contentDescription = if (expanded) "Collapse" else "Expand"
+                contentDescription = if (expanded) "Abschnitt einklappen" else "Abschnitt ausklappen"
             )
         }
     }
@@ -108,6 +125,7 @@ private fun SelectRow(vm: MainViewModel, c: Currency) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(checked = selected, onCheckedChange = { vm.toggleSelected(c.id) })
+        CurrencyFlag(c)
         Column(Modifier.weight(1f)) {
             Text(c.name, style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -119,7 +137,7 @@ private fun SelectRow(vm: MainViewModel, c: Currency) {
         IconButton(onClick = { vm.toggleFavorite(c.id) }) {
             Icon(
                 if (favorite) Icons.Default.Star else Icons.Outlined.Star,
-                contentDescription = if (favorite) "Remove favorite" else "Mark as favorite"
+                contentDescription = if (favorite) "Aus Favoriten entfernen" else "Als Favorit markieren"
             )
         }
     }

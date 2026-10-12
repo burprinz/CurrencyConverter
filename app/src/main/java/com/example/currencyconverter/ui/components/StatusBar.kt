@@ -17,7 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -26,9 +26,6 @@ import com.example.currencyconverter.data.FetchState
 import java.text.DateFormat
 import java.util.Date
 
-private val BarGray = Color(0xFFE0E0E0)
-private val BarText = Color(0xFF424242)
-
 /** Small gray bar at the bottom: status, last update, refresh button and API attribution. */
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
@@ -36,15 +33,15 @@ fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) 
     val last = if (lastUpdateMillis > 0) {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(lastUpdateMillis))
     } else {
-        "never"
+        "noch nie"
     }
     val text = when (state) {
-        FetchState.LOADING -> "Updating... (Last updated: $last)"
-        FetchState.OFFLINE -> "Offline - Last updated: $last"
-        else -> "Last updated: $last"
+        FetchState.LOADING -> "Kurse werden aktualisiert … (Stand: $last)"
+        FetchState.OFFLINE -> "Offline – letzter Stand: $last"
+        else -> "Letzter Kursstand: $last"
     }
 
-    Surface(color = BarGray, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .navigationBarsPadding()
@@ -53,11 +50,11 @@ fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) 
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(Modifier.weight(1f)) {
-                Text(text, color = BarText, fontSize = 12.sp)
+                Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 // Attribution required by the free ExchangeRate-API endpoint
                 Text(
                     "Rates By Exchange Rate API",
-                    color = BarText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 10.sp,
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier.clickable { uriHandler.openUri("https://www.exchangerate-api.com") }
@@ -68,7 +65,7 @@ fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) 
                 enabled = state != FetchState.LOADING,
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Refresh rates", tint = BarText)
+                Icon(Icons.Default.Refresh, contentDescription = "Kurse aktualisieren", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }

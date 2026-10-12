@@ -20,6 +20,16 @@ fun formatAmount(value: Double): String {
 /** Accepts both "1.5" and "1,5". */
 fun parseAmount(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()
 
+/** Keeps numeric input editable while allowing at most one decimal separator. */
+fun sanitizeAmountInput(text: String): String {
+    val separatorIndex = text.indexOfFirst { it == '.' || it == ',' }
+    if (separatorIndex < 0) return text.filter(Char::isDigit)
+
+    val whole = text.take(separatorIndex).filter(Char::isDigit)
+    val decimals = text.drop(separatorIndex + 1).filter(Char::isDigit)
+    return whole + text[separatorIndex] + decimals
+}
+
 /** Removes floating point noise before floor/ceil (2.9999999999 -> 3.0). */
 fun roundClean(value: Double): Double =
     BigDecimal(value).setScale(6, RoundingMode.HALF_UP).toDouble()

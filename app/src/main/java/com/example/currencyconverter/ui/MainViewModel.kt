@@ -18,6 +18,7 @@ import com.example.currencyconverter.util.currencyDisplayName
 import com.example.currencyconverter.util.formatAmount
 import com.example.currencyconverter.util.parseAmount
 import com.example.currencyconverter.util.roundClean
+import com.example.currencyconverter.util.sanitizeAmountInput
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
@@ -112,7 +113,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onValueChange(id: String, text: String) {
-        setActive(id, text.filter { it.isDigit() || it == '.' || it == ',' })
+        setActive(id, sanitizeAmountInput(text))
     }
 
     fun roundDown(c: Currency) {
@@ -168,16 +169,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Creates (editingId == null) or updates a custom currency. Returns an error text or null. */
     fun saveCustom(editingId: String?, name: String, refCode: String, factor: Double?): String? {
         val cleanName = name.trim()
-        if (cleanName.isEmpty()) return "Please enter a name"
-        if (factor == null || factor <= 0.0) return "Please enter a value greater than 0"
-        if (refCode !in rates) return "Reference currency not available (rates not loaded yet)"
+        if (cleanName.isEmpty()) return "Bitte gib einen Namen ein."
+        if (factor == null || factor <= 0.0) return "Bitte gib einen Wert größer als 0 ein."
+        if (refCode !in rates) return "Die Referenzwährung ist noch nicht verfügbar. Bitte warte, bis die Kurse geladen sind."
 
         // Names must be unique (case-insensitive) across real, own and fun currencies.
         val nameTaken = (realCurrencies + customCurrencies.filter { it.id != editingId } + FunCurrencies.all)
             .any { it.name.equals(cleanName, ignoreCase = true) || it.id.equals(cleanName, ignoreCase = true) }
-        if (nameTaken) return "A currency with this name already exists"
+        if (nameTaken) return "Eine Währung mit diesem Namen gibt es bereits."
 
-        customCurrencies = if (editingId == null) {
+        val isNewCurrency = editingId == null
+        customCurrencies = if (isNewCurrency) {
             customCurrencies + Currency(
                 id = "custom_${System.currentTimeMillis()}",
                 name = cleanName,
@@ -191,6 +193,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         storage.customCurrencies = customCurrencies
+        if (isNewCurrency) addToSelection(customCurrencies.last().id)
         return null
     }
 

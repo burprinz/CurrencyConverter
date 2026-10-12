@@ -39,17 +39,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.ui.MainViewModel
+import com.example.currencyconverter.ui.components.CurrencyFlag
 import com.example.currencyconverter.util.formatAmount
 import com.example.currencyconverter.util.parseAmount
+import com.example.currencyconverter.util.sanitizeAmountInput
 
 /** Create, edit and remove own currencies. */
 @Composable
-fun AddCurrencyScreen(vm: MainViewModel) {
+fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var name by rememberSaveable { mutableStateOf("") }
     var refCode by rememberSaveable { mutableStateOf("USD") }
     var factorText by rememberSaveable { mutableStateOf("1") }
     var error by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
+    var showGoToConverter by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<Currency?>(null) }
 
@@ -61,42 +65,55 @@ fun AddCurrencyScreen(vm: MainViewModel) {
         refCode = "USD"
         factorText = "1"
         error = null
+        successMessage = null
+        showGoToConverter = false
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
         item {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    if (editingId == null) "New currency" else "Edit currency",
+                    if (editingId == null) "Eigene Währung erstellen" else "Währung bearbeiten",
                     style = MaterialTheme.typography.titleMedium
                 )
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name (e.g. Gold Coins)") },
+                    onValueChange = { name = it; successMessage = null; showGoToConverter = false },
+                    label = { Text("Name (z. B. Goldmünzen)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Text("Reference currency for conversion:", style = MaterialTheme.typography.bodyMedium)
+                Text("Umrechnung anhand einer Referenzwährung:", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Gib an, wie viele Einheiten der Referenzwährung eine Einheit deiner Währung wert ist.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("1 ${name.ifBlank { "unit" }} =")
+                    Text("1 ${name.ifBlank { "Einheit" }} =")
                     OutlinedTextField(
                         value = factorText,
-                        onValueChange = { factorText = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
+                        onValueChange = { factorText = sanitizeAmountInput(it); successMessage = null; showGoToConverter = false },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
                     Box {
                         OutlinedButton(onClick = { menuOpen = true }) {
+                            vm.realCurrencies.firstOrNull { it.id == refCode }?.let { CurrencyFlag(it) }
                             Text(refCode)
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Choose reference currency")
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Referenzwährung auswählen")
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             refOptions.forEach { code ->
                                 DropdownMenuItem(
-                                    text = { Text(code) },
-                                    onClick = { refCode = code; menuOpen = false }
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            vm.realCurrencies.firstOrNull { it.id == code }?.let { CurrencyFlag(it) }
+                                            Text(code, modifier = Modifier.padding(start = 8.dp))
+                                        }
+                                    },
+                                    onClick = { refCode = code; menuOpen = false; successMessage = null }
                                 )
                             }
                         }
@@ -105,22 +122,39 @@ fun AddCurrencyScreen(vm: MainViewModel) {
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = {
+                        val wasNewCurrency = editingId == null
                         val result = vm.saveCustom(editingId, name, refCode, parseAmount(factorText))
-                        if (result == null) resetForm() else error = result
-                    }) { Text(if (editingId == null) "Create" else "Save changes") }
+                        if (result == null) {
+                            resetForm()
+                            successMessage = if (wasNewCurrency) {
+                                "Währung hinzugefügt und für die Umrechnung ausgewählt."
+                            } else {
+                                "Änderungen gespeichert."
+                            }
+                            showGoToConverter = wasNewCurrency
+                        } else {
+                            successMessage = null
+                            showGoToConverter = false
+                            error = result
+                        }
+                }) { Text(if (editingId == null) "Erstellen" else "Änderungen speichern") }
                     if (editingId != null) {
-                        TextButton(onClick = { resetForm() }) { Text("Cancel") }
+                        TextButton(onClick = { resetForm() }) { Text("Abbrechen") }
                     }
+                }
+                successMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                if (showGoToConverter) {
+                    TextButton(onClick = onGoToConverter) { Text("Zur Umrechnung") }
                 }
             }
             HorizontalDivider()
             Text(
-                "Your currencies",
+                "Deine eigenen Währungen",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(12.dp)
             )
             if (vm.customCurrencies.isEmpty()) {
-                Text("You haven't created any currencies yet.", modifier = Modifier.padding(horizontal = 12.dp))
+                Text("Du hast noch keine eigene Währung erstellt.", modifier = Modifier.padding(horizontal = 12.dp))
             }
         }
 
@@ -139,9 +173,11 @@ fun AddCurrencyScreen(vm: MainViewModel) {
                     refCode = c.refCode ?: "USD"
                     factorText = formatAmount(c.factor)
                     error = null
+                    successMessage = null
+                    showGoToConverter = false
                 }) { Icon(Icons.Default.Edit, contentDescription = "Edit") }
                 IconButton(onClick = { pendingDelete = c }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Remove")
+                    Icon(Icons.Default.Delete, contentDescription = "Entfernen")
                 }
             }
         }
@@ -150,16 +186,16 @@ fun AddCurrencyScreen(vm: MainViewModel) {
     pendingDelete?.let { c ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Remove currency?") },
-            text = { Text("\"${c.name}\" will be deleted.") },
+            title = { Text("Währung entfernen?") },
+            text = { Text("„${c.name}“ wird gelöscht.") },
             confirmButton = {
                 TextButton(onClick = {
                     if (editingId == c.id) resetForm()
                     vm.deleteCustom(c.id)
                     pendingDelete = null
-                }) { Text("Remove") }
+                }) { Text("Entfernen") }
             },
-            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Abbrechen") } }
         )
     }
 }
