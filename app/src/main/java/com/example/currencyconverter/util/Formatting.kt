@@ -1,0 +1,32 @@
+package com.example.currencyconverter.util
+
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.util.Locale
+import kotlin.math.abs
+
+/** Formats an amount compactly (max. 2/4/6 decimals, trailing zeros removed). */
+fun formatAmount(value: Double): String {
+    if (value.isNaN() || value.isInfinite()) return ""
+    val pattern = when {
+        abs(value) >= 100 -> "%.2f"
+        abs(value) >= 1 -> "%.4f"
+        else -> "%.6f"
+    }
+    val s = pattern.format(Locale.US, value)
+    return if (s.contains('.')) s.trimEnd('0').trimEnd('.') else s
+}
+
+/** Accepts both "1.5" and "1,5". */
+fun parseAmount(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()
+
+/** Removes floating point noise before floor/ceil (2.9999999999 -> 3.0). */
+fun roundClean(value: Double): Double =
+    BigDecimal(value).setScale(6, RoundingMode.HALF_UP).toDouble()
+
+/** Human readable name for an ISO code (e.g. "EUR" -> "Euro"); falls back to the code. */
+fun currencyDisplayName(code: String): String = try {
+    java.util.Currency.getInstance(code).getDisplayName(Locale.getDefault())
+} catch (e: Exception) {
+    code
+}
