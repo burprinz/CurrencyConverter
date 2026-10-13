@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
@@ -97,8 +98,12 @@ fun CurrencyRow(
                 IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.Close, contentDescription = "Remove from list")
                 }
-                androidx.compose.material3.TextButton(onClick = { paletteOpen = true }, modifier = Modifier.size(40.dp)) {
-                    Text("●", color = accent ?: MaterialTheme.colorScheme.outline)
+                IconButton(onClick = { paletteOpen = true }, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit card color",
+                        tint = accent ?: MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 DropdownMenu(expanded = paletteOpen, onDismissRequest = { paletteOpen = false }) {
                     DropdownMenuItem(text = { Text("Default") }, onClick = { onColorSelected(null); paletteOpen = false })
