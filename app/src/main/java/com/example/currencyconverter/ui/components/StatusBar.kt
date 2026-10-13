@@ -32,13 +32,7 @@ import java.util.Locale
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
     val uriHandler = LocalUriHandler.current
-    val locale = when (LocalAppLanguage.current) {
-        "de" -> Locale.GERMAN
-        "es" -> Locale("es")
-        "zh" -> Locale.SIMPLIFIED_CHINESE
-        "ja" -> Locale.JAPANESE
-        else -> Locale.ENGLISH
-    }
+    val locale = Locale.forLanguageTag(LocalAppLanguage.current)
     val last = if (lastUpdateMillis > 0) {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale).format(Date(lastUpdateMillis))
     } else {

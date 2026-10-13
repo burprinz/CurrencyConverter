@@ -22,17 +22,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.ui.MainViewModel
 
-private data class LanguageOption(val code: String, val nativeName: String, val searchNames: List<String>)
+private data class LanguageOption(val code: String, val nativeName: String, val flag: String, val searchNames: List<String>)
 
 @Composable
 fun SettingsScreen(vm: MainViewModel) {
     var languageQuery by rememberSaveable { mutableStateOf("") }
     val languages = listOf(
-        LanguageOption("en", "English", listOf("English", "Englisch", "Inglés")),
-        LanguageOption("de", "Deutsch", listOf("Deutsch", "German", "Alemán")),
-        LanguageOption("es", "Español", listOf("Español", "Spanish", "Spanisch")),
-        LanguageOption("zh", "简体中文", listOf("Chinese", "中文", "Chinesisch", "Mandarin", "简体中文", "Chinese (Simplified)")),
-        LanguageOption("ja", "日本語", listOf("Japanese", "日本語", "Japanisch", "Japonés"))
+        LanguageOption("en", "English", "🇬🇧", listOf("English", "Englisch", "Inglés")),
+        LanguageOption("de", "Deutsch", "🇩🇪", listOf("Deutsch", "German", "Alemán")),
+        LanguageOption("es", "Español", "🇪🇸", listOf("Español", "Spanish", "Spanisch")),
+        LanguageOption("zh", "简体中文", "🇨🇳", listOf("Chinese", "中文", "Chinesisch", "Mandarin", "简体中文", "Chinese (Simplified)")),
+        LanguageOption("ja", "日本語", "🇯🇵", listOf("Japanese", "日本語", "Japanisch", "Japonés")),
+        LanguageOption("hi", "हिन्दी", "🇮🇳", listOf("Hindi", "हिन्दी", "Indisch")),
+        LanguageOption("ar", "العربية", "🇸🇦", listOf("Arabic", "العربية", "Arabisch", "Árabe")),
+        LanguageOption("fr", "Français", "🇫🇷", listOf("French", "Français", "Französisch", "Francés")),
+        LanguageOption("bn", "বাংলা", "🇧🇩", listOf("Bengali", "Bangla", "বাংলা", "Bengalisch")),
+        LanguageOption("pt", "Português", "🇧🇷", listOf("Portuguese", "Português", "Portugiesisch", "Portugués")),
+        LanguageOption("ru", "Русский", "🇷🇺", listOf("Russian", "Русский", "Russisch", "Ruso")),
+        LanguageOption("id", "Bahasa Indonesia", "🇮🇩", listOf("Indonesian", "Bahasa Indonesia", "Indonesisch")),
+        LanguageOption("ur", "اردو", "🇵🇰", listOf("Urdu", "اردو")),
+        LanguageOption("tr", "Türkçe", "🇹🇷", listOf("Turkish", "Türkçe", "Türkisch", "Turco")),
+        LanguageOption("vi", "Tiếng Việt", "🇻🇳", listOf("Vietnamese", "Tiếng Việt", "Vietnamesisch", "Vietnamita"))
     )
     val visibleLanguages = languages.filter { option ->
         languageQuery.isBlank() || option.searchNames.any { it.contains(languageQuery.trim(), ignoreCase = true) } ||
@@ -57,6 +67,7 @@ fun SettingsScreen(vm: MainViewModel) {
         visibleLanguages.forEach { language ->
             Row(Modifier.fillMaxWidth().clickable { vm.changeLanguage(language.code) }, verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = vm.language == language.code, onClick = { vm.changeLanguage(language.code) })
+                Text(language.flag, modifier = Modifier.padding(end = 10.dp))
                 Text(language.nativeName)
             }
         }
