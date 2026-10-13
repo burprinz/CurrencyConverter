@@ -17,7 +17,8 @@ data class Currency(
     val kind: CurrencyKind,
     val refCode: String? = null,
     val factor: Double = 1.0,
-    val description: String = ""
+    val description: String = "",
+    val category: String = "Other"
 ) {
     val subtitle: String
         get() = if (kind == CurrencyKind.REAL) id else "1 = ${formatAmount(factor)} $refCode"
