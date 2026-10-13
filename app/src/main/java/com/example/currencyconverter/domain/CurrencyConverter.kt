@@ -3,9 +3,13 @@ package com.example.currencyconverter.domain
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.model.CurrencyKind
 
-/** Pure conversion logic. [rates] = units of currency per 1 USD. */
+/**
+ * Converts amounts without Android/UI dependencies. [rates] stores units of each real currency per USD.
+ * For custom/fun currencies, the catalog factor says how much of [Currency.refCode] one unit represents.
+ */
 class CurrencyConverter(private val rates: Map<String, Double>) {
 
+    /** Returns how many units of [c] equal one USD; invalid or missing rates make conversion unavailable. */
     private fun unitsPerUsd(c: Currency): Double? = when (c.kind) {
         CurrencyKind.REAL -> rates[c.id]?.takeIf { it.isFinite() && it > 0.0 }
         else -> {
@@ -16,6 +20,7 @@ class CurrencyConverter(private val rates: Map<String, Double>) {
     }
 
     fun convert(amount: Double, from: Currency, to: Currency): Double? {
+        // Convert through USD as a common reference: amount * (target units/USD) / (source units/USD).
         if (!amount.isFinite()) return null
         val f = unitsPerUsd(from) ?: return null
         val t = unitsPerUsd(to) ?: return null
