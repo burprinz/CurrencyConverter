@@ -35,6 +35,7 @@ import com.example.currencyconverter.data.model.FunCurrencies
 import com.example.currencyconverter.ui.MainViewModel
 
 /** Fan currencies with an explanation of their estimated values. */
+/** Catalog for browsing and unlocking fictional, game, and loyalty-program currencies. */
 @Composable
 fun UnlockScreen(vm: MainViewModel) {
     var showInfo by rememberSaveable { mutableStateOf(false) }

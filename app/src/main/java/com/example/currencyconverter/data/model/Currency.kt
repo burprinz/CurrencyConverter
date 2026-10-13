@@ -2,6 +2,7 @@ package com.example.currencyconverter.data.model
 
 import com.example.currencyconverter.util.formatAmount
 
+/** Determines where a currency's value comes from and how it is displayed. */
 enum class CurrencyKind { REAL, CUSTOM, FUN }
 
 /**

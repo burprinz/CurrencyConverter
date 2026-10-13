@@ -45,6 +45,7 @@ import com.example.currencyconverter.util.parseAmount
 import com.example.currencyconverter.util.sanitizeAmountInput
 
 /** Create, edit and remove own currencies. */
+/** Form for creating or editing a custom currency relative to a real reference currency. */
 @Composable
 fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }

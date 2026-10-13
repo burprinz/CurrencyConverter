@@ -92,6 +92,7 @@ private val moreLanguageTranslations = mapOf(
     "sw" to mapOf("Convert" to "Badili", "Favorites" to "Vipendwa", "Rate history" to "Historia ya viwango", "Camera converter" to "Kibadilishaji cha kamera", "Choose currencies" to "Chagua sarafu", "Custom currencies" to "Sarafu maalum", "Fan currencies" to "Sarafu za mashabiki", "Settings" to "Mipangilio", "Amount" to "Kiasi", "Search currency" to "Tafuta sarafu", "Day" to "Siku", "Week" to "Wiki", "Month" to "Mwezi", "Year" to "Mwaka", "All time" to "Muda wote", "Theme" to "Mandhari", "Language" to "Lugha", "Light" to "Mwanga", "Dark" to "Giza", "System" to "Mfumo", "Cancel" to "Ghairi", "Create" to "Unda", "Delete" to "Futa", "Retry" to "Jaribu tena", "Add" to "Ongeza", "Edit" to "Hariri", "Search language" to "Tafuta lugha")
 )
 
+/** Looks up a translated label and renders it with Material Text's layout options. */
 @Composable
 fun LocalizedText(
     text: String,
@@ -168,6 +169,7 @@ fun LocalizedText(
     )
 }
 
+/** Makes the selected language available to all descendant [LocalizedText] calls. */
 @Composable
 fun ProvideAppLanguage(language: String, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAppLanguage provides language, content = content)

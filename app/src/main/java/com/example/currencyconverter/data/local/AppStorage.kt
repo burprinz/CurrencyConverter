@@ -6,7 +6,10 @@ import com.example.currencyconverter.data.model.CurrencyKind
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Everything that has to survive an app restart. */
+/**
+ * Small persistence layer backed by Android SharedPreferences.
+ * It stores rates and user choices; UI state itself stays in [com.example.currencyconverter.ui.MainViewModel].
+ */
 class AppStorage(context: Context) {
 
     private val prefs = context.getSharedPreferences("currency_converter", Context.MODE_PRIVATE)

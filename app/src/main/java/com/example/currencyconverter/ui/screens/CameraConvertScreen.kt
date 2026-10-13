@@ -79,6 +79,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
+/** Owns camera permissions, live OCR, optional capture, and displaying the converted amount. */
 @Composable
 fun CameraConvertScreen(vm: MainViewModel) {
     val context = LocalContext.current
@@ -262,6 +263,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
     }
 }
 
+/** Searchable source/target currency picker used by the camera conversion screen. */
 @Composable
 private fun CurrencyPicker(
     label: String,
@@ -314,6 +316,7 @@ private fun CurrencyPicker(
     }
 }
 
+/** Displays the rear camera and forwards recognized text or camera errors to the screen. */
 @Composable
 @OptIn(ExperimentalGetImage::class)
 private fun CameraPreview(

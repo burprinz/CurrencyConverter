@@ -28,6 +28,7 @@ import java.math.RoundingMode
  */
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
+    /** Minimal copy of editable state used to restore the UI after an undo action. */
     private data class UndoSnapshot(
         val selectedIds: List<String>,
         val favoriteIds: Set<String>,

@@ -3,6 +3,7 @@ package com.example.currencyconverter.data
 import com.example.currencyconverter.data.local.AppStorage
 import com.example.currencyconverter.data.remote.RatesApi
 
+/** UI-facing status of the latest-rate request. */
 enum class FetchState { IDLE, LOADING, SUCCESS, OFFLINE }
 
 /** Loads rates from the API and keeps the last successful result cached. */

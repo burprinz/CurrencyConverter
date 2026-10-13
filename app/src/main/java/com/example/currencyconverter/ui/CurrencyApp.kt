@@ -38,6 +38,7 @@ import com.example.currencyconverter.ui.screens.SettingsScreen
 import com.example.currencyconverter.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
+/** All destinations shown in the navigation drawer and their source-language screen titles. */
 enum class Screen(val title: String) {
     LIST("Convert"),
     FAVORITES("Favorites"),
@@ -49,6 +50,7 @@ enum class Screen(val title: String) {
     SETTINGS("Settings")
 }
 
+/** Applies the saved language and theme around the entire app UI. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrencyApp(vm: MainViewModel = viewModel()) {
@@ -57,6 +59,7 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
     }
 }
 
+/** Builds the app shell (drawer, app bar, status bar) and displays the selected destination. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CurrencyAppContent(vm: MainViewModel) {

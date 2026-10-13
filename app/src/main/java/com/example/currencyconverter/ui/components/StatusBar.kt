@@ -29,6 +29,7 @@ import java.util.Date
 import java.util.Locale
 
 /** Small gray bar at the bottom: status, last update, refresh button and API attribution. */
+/** Shows rate loading/offline status, the last refresh timestamp, attribution, and refresh action. */
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
     val uriHandler = LocalUriHandler.current

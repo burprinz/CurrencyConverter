@@ -1,5 +1,6 @@
 package com.example.currencyconverter.util
 
+/** Numeric OCR result and a ready-to-show representation for the camera screen. */
 data class DetectedAmount(val value: Double, val display: String)
 
 /**
@@ -31,6 +32,7 @@ fun findLargestAmount(text: String): DetectedAmount? {
     return candidates.maxWithOrNull(compareBy<ScoredAmount> { it.score }.thenBy { it.amount.value })?.amount
 }
 
+/** Internal OCR candidate paired with its relevance score; only the best candidate is returned. */
 private data class ScoredAmount(val amount: DetectedAmount, val score: Int)
 
 // Never span lines: OCR may put unrelated dates, weights and reference numbers nearby.

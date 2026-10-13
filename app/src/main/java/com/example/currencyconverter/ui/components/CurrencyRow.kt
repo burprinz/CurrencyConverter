@@ -55,6 +55,8 @@ fun CurrencyRow(
     onColorSelected: (Int?) -> Unit = {}
 ) {
     var paletteOpen by remember { mutableStateOf(false) }
+    /** One named swatch; its position in [palette] is the value saved by the view model. */
+    /** One named swatch; its position in [palette] is the value saved by the view model. */
     data class PaletteColor(val name: String, val color: Color)
     val palette = listOf(
         PaletteColor("Coral", Color(0xFFE57373)), PaletteColor("Apricot", Color(0xFFFFA726)),

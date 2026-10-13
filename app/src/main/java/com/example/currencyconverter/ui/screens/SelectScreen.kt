@@ -37,6 +37,7 @@ import com.example.currencyconverter.ui.MainViewModel
 import com.example.currencyconverter.ui.components.CurrencyFlag
 
 /** Select/deselect currencies and mark favorites. Two dropdown sections. */
+/** Lets users search, favorite, and select currencies before returning to the converter. */
 @Composable
 fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -97,6 +98,7 @@ fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     }
 }
 
+/** Collapsible heading for a group in the currency chooser. */
 @Composable
 private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit) {
     Surface(
@@ -116,6 +118,7 @@ private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit)
     }
 }
 
+/** One currency choice with its current selection and favorite state. */
 @Composable
 private fun SelectRow(vm: MainViewModel, c: Currency) {
     val selected = c.id in vm.selectedIds
@@ -143,6 +146,7 @@ private fun SelectRow(vm: MainViewModel, c: Currency) {
     }
 }
 
+/** Reusable helper for instructional or empty-state text. */
 @Composable
 private fun Hint(text: String) {
     Text(text, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)

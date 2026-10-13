@@ -24,6 +24,7 @@ import com.example.currencyconverter.ui.MainViewModel
 import com.example.currencyconverter.ui.components.CurrencyRow
 
 /** Main conversion view and favorites view. */
+/** Shows all selected currencies, or only favorites when [favoritesOnly] is enabled. */
 @Composable
 fun ConverterListScreen(
     vm: MainViewModel,

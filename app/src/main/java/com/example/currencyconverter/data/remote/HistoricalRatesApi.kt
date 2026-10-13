@@ -6,9 +6,10 @@ import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 
+/** One dated quote: [rate] is the amount of the selected quote currency for one base unit. */
 data class HistoricalRatePoint(val date: String, val rate: Double)
 
-/** Daily historical rates from Frankfurter. */
+/** Fetches historical currency quotes from Frankfurter on the IO dispatcher. */
 object HistoricalRatesApi {
     suspend fun fetch(base: String, quote: String, from: String, to: String, monthly: Boolean = false): List<HistoricalRatePoint> = withContext(Dispatchers.IO) {
         val params = buildString {

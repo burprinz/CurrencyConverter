@@ -28,6 +28,7 @@ import com.example.currencyconverter.ui.MainViewModel
 /** One selectable locale, its representative flag, and alternate names accepted by search. */
 private data class LanguageOption(val code: String, val nativeName: String, val flag: String, val searchNames: List<String>)
 
+/** Theme and language preferences plus short notes about the app's rate sources. */
 @Composable
 fun SettingsScreen(vm: MainViewModel) {
     var languageQuery by rememberSaveable { mutableStateOf("") }

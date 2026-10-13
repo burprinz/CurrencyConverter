@@ -16,6 +16,7 @@ import java.net.URL
 object RatesApi {
     private const val LATEST_URL = "https://open.er-api.com/v6/latest/USD"
 
+    /** Parsed rates plus their original JSON so the repository can cache the response for offline use. */
     class Result(val rawJson: String, val rates: Map<String, Double>)
 
     suspend fun fetchLatest(): Result = withContext(Dispatchers.IO) {

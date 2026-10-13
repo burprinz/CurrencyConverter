@@ -57,8 +57,10 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 
+/** Preset intervals supported by the history screen and the API date-range calculation. */
 private enum class RatePeriod(val label: String) { DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year"), ALL("All time") }
 
+/** Loads and charts a selected pair of real currencies over the requested time range. */
 @Composable
 fun RateHistoryScreen(vm: MainViewModel) {
     val uriHandler = LocalUriHandler.current
@@ -149,6 +151,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
     }
 }
 
+/** Calculates a range boundary using UTC so API date ranges do not shift with local time zones. */
 private fun shiftedApiDate(date: String, field: Int, amount: Int): String {
     val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
     calendar.time = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
@@ -158,11 +161,13 @@ private fun shiftedApiDate(date: String, field: Int, amount: Int): String {
     return apiDate(calendar)
 }
 
+/** Formats a calendar date in the YYYY-MM-DD format expected by the history endpoint. */
 private fun apiDate(calendar: Calendar): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }.format(calendar.time)
 
+/** Search dropdown for choosing the base or quote currency of the chart. */
 @Composable
 private fun SearchCurrencyPicker(label: String, currencies: List<Currency>, selectedId: String, onSelected: (String) -> Unit, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
@@ -188,6 +193,7 @@ private fun SearchCurrencyPicker(label: String, currencies: List<Currency>, sele
     }
 }
 
+/** Draws the rate graph and maps finger movement to the closest data point. */
 @Composable
 private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: String, modifier: Modifier = Modifier) {
     val color = MaterialTheme.colorScheme.primary
