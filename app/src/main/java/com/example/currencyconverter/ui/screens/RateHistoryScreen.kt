@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,6 +40,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.awaitPointerEventScope
+import androidx.compose.ui.input.pointer.awaitPointerEvent
+import androidx.compose.ui.graphics.nativeCanvas
+import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.remote.HistoricalRatePoint
@@ -126,11 +134,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
                     )
                 }
             }
-            RateChart(points, Modifier.fillMaxWidth().height(260.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(points.first().date.toString(), style = MaterialTheme.typography.labelSmall)
-                Text(points.last().date.toString(), style = MaterialTheme.typography.labelSmall)
-            }
+            RateChart(points, base, quote, Modifier.fillMaxWidth().height(300.dp))
             Text("Daily reference rates. Weekends and holidays may have no new data.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Historical data by Frankfurter", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { uriHandler.openUri("https://frankfurter.dev/") })
         } else if (loading) {
@@ -187,27 +191,79 @@ private fun SearchCurrencyPicker(label: String, currencies: List<Currency>, sele
 }
 
 @Composable
-private fun RateChart(points: List<HistoricalRatePoint>, modifier: Modifier = Modifier) {
+private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: String, modifier: Modifier = Modifier) {
     val color = MaterialTheme.colorScheme.primary
     val grid = MaterialTheme.colorScheme.outlineVariant
-    Canvas(modifier.padding(vertical = 8.dp)) {
-        if (points.size < 2) return@Canvas
+    var selectedIndex by remember(points) { mutableStateOf<Int?>(null) }
+    val labelColor = MaterialTheme.colorScheme.onSurface
+    Column(modifier.padding(vertical = 8.dp)) {
+        Text("Exchange rate (\u0024quote per 1 \u0024base)", style = MaterialTheme.typography.labelMedium)
+        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+            val chartWidth = constraints.maxWidth.toFloat()
+            Canvas(Modifier.fillMaxSize().pointerInput(points) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        when (event.type) {
+                            PointerEventType.Move, PointerEventType.Press -> {
+                                if (points.isNotEmpty()) {
+                                    val inset = 58.dp.toPx()
+                                    val plotWidth = (size.width - inset - 10.dp.toPx()).coerceAtLeast(1f)
+                                    val fraction = ((event.changes.first().position.x - inset) / plotWidth).coerceIn(0f, 1f)
+                                    selectedIndex = (fraction * (points.size - 1)).toInt()
+                                }
+                            }
+                            PointerEventType.Exit, PointerEventType.Release -> selectedIndex = null
+                        }
+                    }
+                }
+            }) {
+                if (points.size < 2) return@Canvas
         val min = points.minOf { it.rate }
         val max = points.maxOf { it.rate }
         val range = (max - min).takeIf { it > 0.0 } ?: max * 0.01
-        val inset = 12.dp.toPx()
-        val width = size.width - inset * 2
-        val height = size.height - inset * 2
-        repeat(4) { row ->
-            val y = inset + height * row / 3f
-            drawLine(grid, Offset(inset, y), Offset(size.width - inset, y), strokeWidth = 1.dp.toPx())
+        val left = 58.dp.toPx()
+        val right = 10.dp.toPx()
+        val top = 12.dp.toPx()
+        val bottom = 28.dp.toPx()
+        val width = size.width - left - right
+        val height = size.height - top - bottom
+        val native = drawContext.canvas.nativeCanvas
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.argb((labelColor.alpha * 255).toInt(), (labelColor.red * 255).toInt(), (labelColor.green * 255).toInt(), (labelColor.blue * 255).toInt())
+            textSize = 11.dp.toPx()
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
+        repeat(5) { row ->
+            val fraction = row / 4f
+            val y = top + height * fraction
+            drawLine(grid, Offset(left, y), Offset(size.width - right, y), strokeWidth = 1.dp.toPx())
+            native.drawText(formatAmount(max - range * fraction), 0f, y + paint.textSize / 3f, paint)
+        }
+        val datePaint = Paint(paint).apply { textSize = 10.dp.toPx() }
+        native.drawText(points.first().date.toString(), left, size.height - 4.dp.toPx(), datePaint)
+        val lastDate = points.last().date.toString()
+        native.drawText(lastDate, size.width - right - datePaint.measureText(lastDate), size.height - 4.dp.toPx(), datePaint)
         val path = Path()
         points.forEachIndexed { index, point ->
-            val x = inset + width * index / (points.size - 1).toFloat()
-            val y = inset + height * (1f - ((point.rate - min) / range).toFloat())
+            val x = left + width * index / (points.size - 1).toFloat()
+            val y = top + height * (1f - ((point.rate - min) / range).toFloat())
             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
         drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
+        selectedIndex?.let { index ->
+            val point = points[index]
+            val x = left + width * index / (points.size - 1).toFloat()
+            val y = top + height * (1f - ((point.rate - min) / range).toFloat())
+            drawLine(color.copy(alpha = 0.5f), Offset(x, top), Offset(x, top + height), strokeWidth = 1.dp.toPx())
+            drawCircle(color, 5.dp.toPx(), Offset(x, y))
+        }
+            }
+            Text("Date", style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.CenterHorizontally))
+            selectedIndex?.let { index ->
+                val point = points[index]
+                Text("${point.date}: 1 $base = ${formatAmount(point.rate)} $quote", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+        }
     }
 }
