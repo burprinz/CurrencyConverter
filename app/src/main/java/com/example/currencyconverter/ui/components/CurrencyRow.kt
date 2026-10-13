@@ -1,6 +1,7 @@
 package com.example.currencyconverter.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,7 +45,10 @@ fun CurrencyRow(
         runCatching { java.util.Currency.getInstance(currency.id).defaultFractionDigits }
             .getOrNull()?.takeIf { it >= 0 } ?: 2
     } else 2
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CurrencyFlag(currency)
