@@ -25,7 +25,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import com.example.currencyconverter.ui.LocalizedText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,8 +42,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.awaitPointerEventScope
-import androidx.compose.ui.input.pointer.awaitPointerEvent
 import androidx.compose.ui.graphics.nativeCanvas
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -199,7 +197,6 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
     Column(modifier.padding(vertical = 8.dp)) {
         Text("Exchange rate (\u0024quote per 1 \u0024base)", style = MaterialTheme.typography.labelMedium)
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
-            val chartWidth = constraints.maxWidth.toFloat()
             Canvas(Modifier.fillMaxSize().pointerInput(points) {
                 awaitPointerEventScope {
                     while (true) {
@@ -230,7 +227,7 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
         val height = size.height - top - bottom
         val native = drawContext.canvas.nativeCanvas
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.argb((labelColor.alpha * 255).toInt(), (labelColor.red * 255).toInt(), (labelColor.green * 255).toInt(), (labelColor.blue * 255).toInt())
+            this.color = android.graphics.Color.argb((labelColor.alpha * 255).toInt(), (labelColor.red * 255).toInt(), (labelColor.green * 255).toInt(), (labelColor.blue * 255).toInt())
             textSize = 11.dp.toPx()
             typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
@@ -259,7 +256,7 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
             drawCircle(color, 5.dp.toPx(), Offset(x, y))
         }
             }
-            Text("Date", style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Text("Date", style = MaterialTheme.typography.labelSmall, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             selectedIndex?.let { index ->
                 val point = points[index]
                 Text("${point.date}: 1 $base = ${formatAmount(point.rate)} $quote", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)

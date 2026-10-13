@@ -7,7 +7,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
+import com.example.currencyconverter.ui.LocalizedText as Text
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.model.CurrencyKind
 import com.example.currencyconverter.util.currencyFlag

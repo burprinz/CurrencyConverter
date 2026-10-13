@@ -14,7 +14,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import com.example.currencyconverter.ui.LocalizedText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
@@ -34,6 +34,8 @@ import com.example.currencyconverter.ui.screens.ConverterListScreen
 import com.example.currencyconverter.ui.screens.SelectScreen
 import com.example.currencyconverter.ui.screens.UnlockScreen
 import com.example.currencyconverter.ui.screens.RateHistoryScreen
+import com.example.currencyconverter.ui.screens.SettingsScreen
+import com.example.currencyconverter.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 enum class Screen(val title: String) {
@@ -43,12 +45,21 @@ enum class Screen(val title: String) {
     CAMERA("Camera converter"),
     SELECT("Choose currencies"),
     ADD_NEW("Custom currencies"),
-    UNLOCK("Fan currencies")
+    UNLOCK("Fan currencies"),
+    SETTINGS("Settings")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrencyApp(vm: MainViewModel = viewModel()) {
+    ProvideAppLanguage(vm.language) {
+        AppTheme { CurrencyAppContent(vm) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CurrencyAppContent(vm: MainViewModel) {
     var screen by rememberSaveable { mutableStateOf(Screen.LIST) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -109,6 +120,7 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
                     Screen.UNLOCK -> UnlockScreen(vm)
                     Screen.CAMERA -> CameraConvertScreen(vm)
                     Screen.RATES -> RateHistoryScreen(vm)
+                    Screen.SETTINGS -> SettingsScreen(vm)
                 }
             }
         }

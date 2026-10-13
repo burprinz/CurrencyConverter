@@ -13,7 +13,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import com.example.currencyconverter.ui.LocalizedText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.currencyconverter.data.FetchState
+import com.example.currencyconverter.ui.LocalAppLanguage
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,8 +32,9 @@ import java.util.Locale
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    val locale = when (LocalAppLanguage.current) { "de" -> Locale.GERMAN; "es" -> Locale("es"); else -> Locale.ENGLISH }
     val last = if (lastUpdateMillis > 0) {
-        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.ENGLISH).format(Date(lastUpdateMillis))
+        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale).format(Date(lastUpdateMillis))
     } else {
         "never"
     }

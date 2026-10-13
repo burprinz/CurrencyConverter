@@ -36,8 +36,9 @@ fun roundClean(value: Double): Double =
     BigDecimal(value).setScale(6, RoundingMode.HALF_UP).toDouble()
 
 /** Human readable English name for an ISO code; falls back to the code. */
-fun currencyDisplayName(code: String): String = try {
-    java.util.Currency.getInstance(code).getDisplayName(Locale.ENGLISH)
+fun currencyDisplayName(code: String, language: String = "en"): String = try {
+    val locale = when (language) { "de" -> Locale.GERMAN; "es" -> Locale("es"); else -> Locale.ENGLISH }
+    java.util.Currency.getInstance(code).getDisplayName(locale)
 } catch (e: Exception) {
     code
 }

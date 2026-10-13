@@ -54,6 +54,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var currencyColors by mutableStateOf(storage.currencyColors)
         private set
+    var language by mutableStateOf(storage.language)
+        private set
+
+    fun changeLanguage(code: String) {
+        if (code !in setOf("en", "de", "es")) return
+        language = code
+        storage.language = code
+    }
 
     fun setCurrencyColor(id: String, paletteIndex: Int?) {
         currencyColors = if (paletteIndex == null) currencyColors - id else currencyColors + (id to paletteIndex)
@@ -74,7 +82,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ---- derived state ----------------------------------------------------
     val realCurrencies: List<Currency> by derivedStateOf {
         rates.keys
-            .map { Currency(it, currencyDisplayName(it), CurrencyKind.REAL) }
+            .map { Currency(it, currencyDisplayName(it, language), CurrencyKind.REAL) }
             .sortedBy { it.name.lowercase() }
     }
 
