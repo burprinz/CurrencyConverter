@@ -37,7 +37,13 @@ fun roundClean(value: Double): Double =
 
 /** Human readable English name for an ISO code; falls back to the code. */
 fun currencyDisplayName(code: String, language: String = "en"): String = try {
-    val locale = when (language) { "de" -> Locale.GERMAN; "es" -> Locale("es"); else -> Locale.ENGLISH }
+    val locale = when (language) {
+        "de" -> Locale.GERMAN
+        "es" -> Locale("es")
+        "zh" -> Locale.SIMPLIFIED_CHINESE
+        "ja" -> Locale.JAPANESE
+        else -> Locale.ENGLISH
+    }
     java.util.Currency.getInstance(code).getDisplayName(locale)
 } catch (e: Exception) {
     code

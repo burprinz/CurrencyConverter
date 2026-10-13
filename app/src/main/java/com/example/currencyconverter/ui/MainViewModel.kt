@@ -66,7 +66,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun changeLanguage(code: String) {
-        if (code !in setOf("en", "de", "es")) return
+        if (code !in setOf("en", "de", "es", "zh", "ja")) return
         language = code
         storage.language = code
     }
