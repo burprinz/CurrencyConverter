@@ -73,24 +73,24 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
         item {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    if (editingId == null) "Eigene Währung erstellen" else "Währung bearbeiten",
+                    if (editingId == null) "Create custom currency" else "Edit currency",
                     style = MaterialTheme.typography.titleMedium
                 )
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it; successMessage = null; showGoToConverter = false },
-                    label = { Text("Name (z. B. Goldmünzen)") },
+                    label = { Text("Name (e.g. gold coins)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Text("Umrechnung anhand einer Referenzwährung:", style = MaterialTheme.typography.bodyMedium)
+                Text("Set a value relative to a reference currency:", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "Gib an, wie viele Einheiten der Referenzwährung eine Einheit deiner Währung wert ist.",
+                    "Enter how many units of the reference currency one unit of your currency is worth.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("1 ${name.ifBlank { "Einheit" }} =")
+                    Text("1 ${name.ifBlank { "unit" }} =")
                     OutlinedTextField(
                         value = factorText,
                         onValueChange = { factorText = sanitizeAmountInput(it); successMessage = null; showGoToConverter = false },
@@ -102,7 +102,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                         OutlinedButton(onClick = { menuOpen = true }) {
                             vm.realCurrencies.firstOrNull { it.id == refCode }?.let { CurrencyFlag(it) }
                             Text(refCode)
-                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Referenzwährung auswählen")
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Choose reference currency")
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             refOptions.forEach { code ->
@@ -127,9 +127,9 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                         if (result == null) {
                             resetForm()
                             successMessage = if (wasNewCurrency) {
-                                "Währung hinzugefügt und für die Umrechnung ausgewählt."
+                                "Currency added and selected for conversion."
                             } else {
-                                "Änderungen gespeichert."
+                                "Changes saved."
                             }
                             showGoToConverter = wasNewCurrency
                         } else {
@@ -137,24 +137,24 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                             showGoToConverter = false
                             error = result
                         }
-                }) { Text(if (editingId == null) "Erstellen" else "Änderungen speichern") }
+                }) { Text(if (editingId == null) "Create" else "Save changes") }
                     if (editingId != null) {
-                        TextButton(onClick = { resetForm() }) { Text("Abbrechen") }
+                        TextButton(onClick = { resetForm() }) { Text("Cancel") }
                     }
                 }
                 successMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
                 if (showGoToConverter) {
-                    TextButton(onClick = onGoToConverter) { Text("Zur Umrechnung") }
+                    TextButton(onClick = onGoToConverter) { Text("Go to converter") }
                 }
             }
             HorizontalDivider()
             Text(
-                "Deine eigenen Währungen",
+                "Your custom currencies",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(12.dp)
             )
             if (vm.customCurrencies.isEmpty()) {
-                Text("Du hast noch keine eigene Währung erstellt.", modifier = Modifier.padding(horizontal = 12.dp))
+                Text("You have not created any custom currencies yet.", modifier = Modifier.padding(horizontal = 12.dp))
             }
         }
 
@@ -177,7 +177,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                     showGoToConverter = false
                 }) { Icon(Icons.Default.Edit, contentDescription = "Edit") }
                 IconButton(onClick = { pendingDelete = c }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Entfernen")
+                    Icon(Icons.Default.Delete, contentDescription = "Delete")
                 }
             }
         }
@@ -186,16 +186,16 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
     pendingDelete?.let { c ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Währung entfernen?") },
-            text = { Text("„${c.name}“ wird gelöscht.") },
+            title = { Text("Delete currency?") },
+            text = { Text("‘${c.name}’ will be deleted.") },
             confirmButton = {
                 TextButton(onClick = {
                     if (editingId == c.id) resetForm()
                     vm.deleteCustom(c.id)
                     pendingDelete = null
-                }) { Text("Entfernen") }
+                }) { Text("Delete") }
             },
-            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Abbrechen") } }
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } }
         )
     }
 }

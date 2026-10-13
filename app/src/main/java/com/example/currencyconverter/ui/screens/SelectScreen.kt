@@ -60,35 +60,35 @@ fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("1. Wähle deine Währungen", style = MaterialTheme.typography.titleMedium)
-            Text("Setze ein Häkchen bei jeder Währung, die du vergleichen möchtest. Wenn du fertig bist, tippe auf „Fertig – zur Umrechnung“.", style = MaterialTheme.typography.bodyMedium)
-            Text("Der Stern markiert Favoriten.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            Text("1. Choose your currencies", style = MaterialTheme.typography.titleMedium)
+            Text("Check each currency you want to compare. When you're done, tap ‘Done – convert’. ", style = MaterialTheme.typography.bodyMedium)
+            Text("Tap the star to mark a favorite.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
             Button(onClick = onDone, modifier = Modifier.padding(top = 12.dp)) {
-                Text("Fertig – zur Umrechnung")
+                Text("Done – convert")
             }
         }
     }
     OutlinedTextField(
         value = query,
         onValueChange = { query = it },
-        label = { Text("Währung suchen") },
+        label = { Text("Search currencies") },
         singleLine = true,
         modifier = Modifier.fillMaxWidth().padding(12.dp)
     )
     LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 16.dp)) {
-        item { SectionHeader("Währungen (${real.size})", realShown) { realOpen = !realOpen } }
+        item { SectionHeader("Currencies (${real.size})", realShown) { realOpen = !realOpen } }
         if (realShown) {
             if (real.isEmpty()) {
-                item { Hint("Keine Währungen verfügbar. Bitte prüfe die Internetverbindung und aktualisiere die Kurse.") }
+                item { Hint("No currencies available. Check your connection and refresh rates.") }
             } else {
                 items(real, key = { it.id }) { c -> SelectRow(vm, c) }
             }
         }
 
-        item { SectionHeader("Eigene und Fan-Währungen (${custom.size})", customShown) { customOpen = !customOpen } }
+        item { SectionHeader("Custom and fan currencies (${custom.size})", customShown) { customOpen = !customOpen } }
         if (customShown) {
             if (custom.isEmpty()) {
-                item { Hint("Hier ist noch nichts. Erstelle eine eigene Währung im Menü oder schalte Fan-Währungen frei.") }
+                item { Hint("Nothing here yet. Create a custom currency in the menu or unlock fan currencies.") }
             } else {
                 items(custom, key = { it.id }) { c -> SelectRow(vm, c) }
             }
@@ -110,7 +110,7 @@ private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit)
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Icon(
                 if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                contentDescription = if (expanded) "Abschnitt einklappen" else "Abschnitt ausklappen"
+                contentDescription = if (expanded) "Collapse section" else "Expand section"
             )
         }
     }
@@ -137,7 +137,7 @@ private fun SelectRow(vm: MainViewModel, c: Currency) {
         IconButton(onClick = { vm.toggleFavorite(c.id) }) {
             Icon(
                 if (favorite) Icons.Default.Star else Icons.Outlined.Star,
-                contentDescription = if (favorite) "Aus Favoriten entfernen" else "Als Favorit markieren"
+                contentDescription = if (favorite) "Remove from favorites" else "Mark as favorite"
             )
         }
     }

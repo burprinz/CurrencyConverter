@@ -20,15 +20,15 @@ class AppStorage(context: Context) {
         set(value) { prefs.edit().putLong("last_update", value).apply() }
 
     var selectedIds: List<String>
-        get() = prefs.getString("selected", "")!!.split(",").filter { it.isNotEmpty() }
+        get() = prefs.getString("selected", "").orEmpty().split(",").filter { it.isNotEmpty() }
         set(value) { prefs.edit().putString("selected", value.joinToString(",")).apply() }
 
     var favoriteIds: Set<String>
-        get() = prefs.getStringSet("favorites", emptySet())!!.toSet()
+        get() = prefs.getStringSet("favorites", emptySet()).orEmpty().toSet()
         set(value) { prefs.edit().putStringSet("favorites", value).apply() }
 
     var unlockedIds: Set<String>
-        get() = prefs.getStringSet("unlocked", emptySet())!!.toSet()
+        get() = prefs.getStringSet("unlocked", emptySet()).orEmpty().toSet()
         set(value) { prefs.edit().putStringSet("unlocked", value).apply() }
 
     /** Currency whose text field the user edited last (the "source" of all values). */

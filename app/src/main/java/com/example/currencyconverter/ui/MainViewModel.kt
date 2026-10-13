@@ -17,14 +17,21 @@ import com.example.currencyconverter.domain.CurrencyConverter
 import com.example.currencyconverter.util.currencyDisplayName
 import com.example.currencyconverter.util.formatAmount
 import com.example.currencyconverter.util.parseAmount
-import com.example.currencyconverter.util.roundClean
 import com.example.currencyconverter.util.sanitizeAmountInput
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlin.math.ceil
-import kotlin.math.floor
+import java.math.RoundingMode
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
+
+    private data class UndoSnapshot(
+        val selectedIds: List<String>,
+        val favoriteIds: Set<String>,
+        val unlockedIds: Set<String>,
+        val customCurrencies: List<Currency>,
+        val activeId: String?,
+        val activeText: String
+    )
 
     private val storage = AppStorage(app)
     private val repository = CurrencyRepository(storage)
@@ -51,6 +58,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var activeText by mutableStateOf(storage.activeText)
         private set
+
+    private var undoHistory by mutableStateOf<List<UndoSnapshot>>(emptyList())
+        private set
+    private var lastTypedChangeAt = 0L
+    val canUndo: Boolean get() = undoHistory.isNotEmpty()
 
     // ---- derived state ----------------------------------------------------
     val realCurrencies: List<Currency> by derivedStateOf {
@@ -113,18 +125,78 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onValueChange(id: String, text: String) {
-        setActive(id, sanitizeAmountInput(text))
+        val cleanText = sanitizeAmountInput(text)
+        if (id == activeId && cleanText == activeText) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastTypedChangeAt > 700L) saveUndoSnapshot()
+        lastTypedChangeAt = now
+        setActive(id, cleanText)
     }
 
     fun roundDown(c: Currency) {
-        amountOf(c)?.let { setActive(c.id, formatAmount(floor(roundClean(it)))) }
+        amountOf(c)?.let {
+            val rounded = roundedText(it, c, RoundingMode.FLOOR)
+            if (c.id == activeId && rounded == activeText) return
+            saveUndoSnapshot()
+            setActive(c.id, rounded)
+        }
     }
 
     fun roundUp(c: Currency) {
-        amountOf(c)?.let { setActive(c.id, formatAmount(ceil(roundClean(it)))) }
+        amountOf(c)?.let {
+            val rounded = roundedText(it, c, RoundingMode.CEILING)
+            if (c.id == activeId && rounded == activeText) return
+            saveUndoSnapshot()
+            setActive(c.id, rounded)
+        }
     }
 
-    fun setToOne(c: Currency) = setActive(c.id, "1")
+    private fun roundedText(value: Double, currency: Currency, mode: RoundingMode): String =
+        java.math.BigDecimal.valueOf(value)
+            .setScale(fractionDigits(currency), mode)
+            .stripTrailingZeros()
+            .toPlainString()
+
+    private fun fractionDigits(currency: Currency): Int = if (currency.kind == CurrencyKind.REAL) {
+        runCatching { java.util.Currency.getInstance(currency.id).defaultFractionDigits }
+            .getOrNull()?.takeIf { it >= 0 } ?: 2
+    } else 2
+
+    fun setToOne(c: Currency) {
+        if (c.id == activeId && parseAmount(activeText) == 1.0) return
+        saveUndoSnapshot()
+        setActive(c.id, "1")
+    }
+
+    private fun saveUndoSnapshot() {
+        undoHistory = (undoHistory + UndoSnapshot(
+            selectedIds = selectedIds.toList(),
+            favoriteIds = favoriteIds.toSet(),
+            unlockedIds = unlockedIds.toSet(),
+            customCurrencies = customCurrencies.toList(),
+            activeId = activeId,
+            activeText = activeText
+        )).takeLast(20)
+        lastTypedChangeAt = 0L
+    }
+
+    fun undoLastChange() {
+        val previous = undoHistory.lastOrNull() ?: return
+        undoHistory = undoHistory.dropLast(1)
+        selectedIds = previous.selectedIds
+        favoriteIds = previous.favoriteIds
+        unlockedIds = previous.unlockedIds
+        customCurrencies = previous.customCurrencies
+        activeId = previous.activeId
+        activeText = previous.activeText
+        storage.selectedIds = selectedIds
+        storage.favoriteIds = favoriteIds
+        storage.unlockedIds = unlockedIds
+        storage.customCurrencies = customCurrencies
+        storage.activeId = activeId
+        storage.activeText = activeText
+        lastTypedChangeAt = 0L
+    }
 
     // ---- selection --------------------------------------------------------
     private fun updateSelected(list: List<String>) {
@@ -133,7 +205,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun toggleSelected(id: String) {
-        if (id in selectedIds) removeFromSelection(id) else addToSelection(id)
+        if (id !in knownById) return
+        saveUndoSnapshot()
+        if (id in selectedIds) removeFromSelectionInternal(id) else addToSelection(id)
     }
 
     private fun addToSelection(id: String) {
@@ -144,6 +218,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun removeFromSelection(id: String) {
+        if (id !in selectedIds) return
+        saveUndoSnapshot()
+        removeFromSelectionInternal(id)
+    }
+
+    private fun removeFromSelectionInternal(id: String) {
         val remaining = selectedIds - id
         if (id == activeId) {
             // Keep the current values: the next currency becomes the new source.
@@ -155,12 +235,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- favorites --------------------------------------------------------
     fun toggleFavorite(id: String) {
+        if (id !in knownById) return
+        saveUndoSnapshot()
         favoriteIds = if (id in favoriteIds) favoriteIds - id else favoriteIds + id
         storage.favoriteIds = favoriteIds
     }
 
     // ---- unlock (later: only via rewarded ad) -----------------------------
     fun unlock(id: String) {
+        if (id in unlockedIds) return
+        saveUndoSnapshot()
         unlockedIds = unlockedIds + id
         storage.unlockedIds = unlockedIds
     }
@@ -169,15 +253,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Creates (editingId == null) or updates a custom currency. Returns an error text or null. */
     fun saveCustom(editingId: String?, name: String, refCode: String, factor: Double?): String? {
         val cleanName = name.trim()
-        if (cleanName.isEmpty()) return "Bitte gib einen Namen ein."
-        if (factor == null || factor <= 0.0) return "Bitte gib einen Wert größer als 0 ein."
-        if (refCode !in rates) return "Die Referenzwährung ist noch nicht verfügbar. Bitte warte, bis die Kurse geladen sind."
+        if (cleanName.isEmpty()) return "Enter a name."
+        if (factor == null || !factor.isFinite() || factor <= 0.0) return "Enter a finite value greater than 0."
+        if (refCode !in rates) return "The reference currency is not available yet. Wait for rates to load."
 
         // Names must be unique (case-insensitive) across real, own and fun currencies.
         val nameTaken = (realCurrencies + customCurrencies.filter { it.id != editingId } + FunCurrencies.all)
             .any { it.name.equals(cleanName, ignoreCase = true) || it.id.equals(cleanName, ignoreCase = true) }
-        if (nameTaken) return "Eine Währung mit diesem Namen gibt es bereits."
+        if (nameTaken) return "A currency with this name already exists."
 
+        saveUndoSnapshot()
         val isNewCurrency = editingId == null
         customCurrencies = if (isNewCurrency) {
             customCurrencies + Currency(
@@ -198,7 +283,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteCustom(id: String) {
-        removeFromSelection(id)
+        if (customCurrencies.none { it.id == id }) return
+        saveUndoSnapshot()
+        removeFromSelectionInternal(id)
         favoriteIds = favoriteIds - id
         storage.favoriteIds = favoriteIds
         customCurrencies = customCurrencies.filter { it.id != id }

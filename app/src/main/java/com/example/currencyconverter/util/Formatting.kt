@@ -18,7 +18,8 @@ fun formatAmount(value: Double): String {
 }
 
 /** Accepts both "1.5" and "1,5". */
-fun parseAmount(text: String): Double? = text.trim().replace(',', '.').toDoubleOrNull()
+fun parseAmount(text: String): Double? =
+    text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
 
 /** Keeps numeric input editable while allowing at most one decimal separator. */
 fun sanitizeAmountInput(text: String): String {
@@ -34,9 +35,9 @@ fun sanitizeAmountInput(text: String): String {
 fun roundClean(value: Double): Double =
     BigDecimal(value).setScale(6, RoundingMode.HALF_UP).toDouble()
 
-/** Human readable name for an ISO code (e.g. "EUR" -> "Euro"); falls back to the code. */
+/** Human readable English name for an ISO code; falls back to the code. */
 fun currencyDisplayName(code: String): String = try {
-    java.util.Currency.getInstance(code).getDisplayName(Locale.getDefault())
+    java.util.Currency.getInstance(code).getDisplayName(Locale.ENGLISH)
 } catch (e: Exception) {
     code
 }

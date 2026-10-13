@@ -37,7 +37,10 @@ object RatesApi {
         if (json == null) return emptyMap()
         return try {
             val obj = JSONObject(json).getJSONObject("rates")
-            obj.keys().asSequence().associateWith { obj.getDouble(it) }
+            obj.keys().asSequence().mapNotNull { code ->
+                val rate = obj.optDouble(code, Double.NaN)
+                if (rate.isFinite() && rate > 0.0) code to rate else null
+            }.toMap()
         } catch (e: Exception) {
             emptyMap()
         }

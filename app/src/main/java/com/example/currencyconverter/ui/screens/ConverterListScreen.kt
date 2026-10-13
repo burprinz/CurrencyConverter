@@ -37,20 +37,20 @@ fun ConverterListScreen(
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                 Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        if (favoritesOnly) "Noch keine Favoriten" else "Willkommen beim Währungsrechner!",
+                        if (favoritesOnly) "No favorites yet" else "Welcome to Currency Converter!",
                         style = MaterialTheme.typography.headlineSmall,
                         textAlign = TextAlign.Center
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        if (favoritesOnly) "Markiere beim Auswählen einen Stern, um Währungen hier schnell wiederzufinden."
-                        else "Wähle zuerst die Währungen aus, die du vergleichen möchtest. Danach erscheinen sie hier. Tippe auf einen Betrag, um die Umrechnung zu ändern.",
+                        if (favoritesOnly) "Tap the star when choosing currencies to find them here quickly."
+                        else "Choose the currencies you want to compare. They will appear here. Tap an amount to change the conversion.",
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(20.dp))
                     Button(onClick = onSelectCurrencies) {
-                        Text(if (favoritesOnly) "Favoriten auswählen" else "Währungen auswählen")
+                        Text(if (favoritesOnly) "Choose favorites" else "Choose currencies")
                     }
                 }
             }
@@ -61,8 +61,8 @@ fun ConverterListScreen(
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             Column(Modifier.padding(start = 4.dp, bottom = 8.dp)) {
-                Text(if (favoritesOnly) "Deine Favoriten" else "Deine Währungen", style = MaterialTheme.typography.headlineSmall)
-                Text("Tippe auf einen Betrag, um alle Werte umzurechnen.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (favoritesOnly) "Your favorites" else "Your currencies", style = MaterialTheme.typography.headlineSmall)
+                Text("Tap an amount to convert all values.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         items(visible, key = { it.id }) { c ->

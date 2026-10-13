@@ -22,6 +22,6 @@ fun CurrencyFlag(currency: Currency) {
         text = flag,
         fontSize = 24.sp,
         fontWeight = FontWeight.Normal,
-        modifier = Modifier.semantics { contentDescription = "Flagge für ${currency.name}" }
+        modifier = Modifier.semantics { contentDescription = "Flag of ${currency.name}" }
     )
 }

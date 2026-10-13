@@ -96,7 +96,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraPermissionGranted = granted
-        if (!granted) cameraMessage = "Ohne Kamerazugriff kann die Erkennung nicht starten."
+        if (!granted) cameraMessage = "Recognition cannot start without camera access."
     }
 
     val currencies = vm.realCurrencies + vm.customAndFunCurrencies
@@ -138,7 +138,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            CurrencyPicker("Von", currencies, fromId, { fromId = it }, Modifier.weight(1f))
+            CurrencyPicker("From", currencies, fromId, { fromId = it }, Modifier.weight(1f))
             IconButton(
                 onClick = { val previousFrom = fromId; fromId = toId; toId = previousFrom },
                 modifier = Modifier.size(44.dp),
@@ -146,7 +146,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
             ) {
                 Text("⇄", fontSize = 26.sp, color = MaterialTheme.colorScheme.primary)
             }
-            CurrencyPicker("Nach", currencies, toId, { toId = it }, Modifier.weight(1f))
+            CurrencyPicker("To", currencies, toId, { toId = it }, Modifier.weight(1f))
         }
 
         Box(
@@ -166,7 +166,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
                 photoBitmap?.let { bitmap ->
                     Image(
                         bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Aufgenommenes Kamerabild; wird nur vorübergehend im Arbeitsspeicher gehalten",
+                        contentDescription = "Captured camera image, held temporarily in memory only",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -174,12 +174,12 @@ fun CameraConvertScreen(vm: MainViewModel) {
             } else {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                     Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Kamerazugriff erforderlich", style = MaterialTheme.typography.titleMedium)
+                        Text("Camera access required", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(8.dp))
-                        Text("Die Kamera wird nur für die Live-Texterkennung und das optionale Foto verwendet.", textAlign = TextAlign.Center)
+                        Text("The camera is used only for live text recognition and the optional photo.", textAlign = TextAlign.Center)
                         Spacer(Modifier.height(16.dp))
                         Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                            Text("Kamera erlauben")
+                            Text("Allow camera")
                         }
                     }
                 }
@@ -188,7 +188,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("Erkannte Umrechnung", style = MaterialTheme.typography.labelLarge)
+                Text("Recognized conversion", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
                 val converted = if (detectedAmount != null && fromCurrency != null && toCurrency != null) {
                     CurrencyConverter(vm.rates).convert(detectedAmount!!.value, fromCurrency, toCurrency)
@@ -201,9 +201,9 @@ fun CameraConvertScreen(vm: MainViewModel) {
                 } else {
                     Text(
                         when {
-                            currencies.isEmpty() -> "Kurse laden, um Währungen auszuwählen."
-                            detectedAmount == null -> "Richte die Kamera auf einen Betrag. Die größte erkannte Zahl wird verwendet."
-                            else -> "Für diese Währungen ist gerade keine Umrechnung verfügbar."
+                            currencies.isEmpty() -> "Load rates to choose currencies."
+                            detectedAmount == null -> "Point the camera at an amount. The largest detected number is used."
+                            else -> "Conversion is currently unavailable for these currencies."
                         },
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -221,40 +221,40 @@ fun CameraConvertScreen(vm: MainViewModel) {
                     onClick = {
                         val frame = previewView?.bitmap
                         if (frame == null) {
-                            cameraMessage = "Das Kamerabild konnte gerade nicht aufgenommen werden."
+                            cameraMessage = "The camera image could not be captured."
                         } else {
                             photoBitmap = frame
                             detectedAmount = null
-                            cameraMessage = "Foto wird auf dem Gerät analysiert …"
+                            cameraMessage = "Analyzing photo on this device …"
                             val requestId = ++photoRequestId
                             recognizer.process(InputImage.fromBitmap(frame, 0))
                                 .addOnSuccessListener { result ->
                                     if (photoRequestId == requestId && photoBitmap != null) {
                                         detectedAmount = findLargestAmount(result.text)
                                         cameraMessage = if (detectedAmount == null) {
-                                            "Keine Zahl erkannt. Richte die Kamera neu aus und versuche es noch einmal."
+                                            "No number detected. Reposition the camera and try again."
                                         } else null
                                     }
                                 }
                                 .addOnFailureListener {
                                     if (photoRequestId == requestId && photoBitmap != null) {
-                                        cameraMessage = "Das Foto konnte nicht gelesen werden."
+                                        cameraMessage = "The photo could not be read."
                                     }
                                 }
                         }
                     },
                     enabled = cameraPermissionGranted
-                ) { Text("Foto prüfen") }
+                ) { Text("Analyze photo") }
             } else {
                 Button(onClick = {
                     photoRequestId++
                     photoBitmap = null
                     detectedAmount = null
-                    cameraMessage = "Foto verworfen. Live-Erkennung läuft weiter."
-                }) { Text("Foto abbrechen") }
+                    cameraMessage = "Photo discarded. Live recognition continues."
+                }) { Text("Discard photo") }
             }
             Text(
-                "Texterkennung läuft auf dem Gerät. Das Foto wird nicht in der Galerie gespeichert.",
+                "Text recognition runs on this device. Photos are not saved to your gallery.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -279,7 +279,7 @@ private fun CurrencyPicker(
             OutlinedButton(onClick = { expanded = true }, enabled = currencies.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
                 if (selected != null) CurrencyFlag(selected)
                 Text(
-                    selected?.let { "${it.name} (${it.id})" } ?: "Währung",
+                        selected?.let { "${it.name} (${it.id})" } ?: "Currency",
                     modifier = Modifier.weight(1f).padding(start = 6.dp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -347,7 +347,7 @@ private fun CameraPreview(
                     try {
                         recognizer.process(InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees))
                             .addOnSuccessListener { result -> latestTextCallback.value(result.text) }
-                            .addOnFailureListener { latestErrorCallback.value("Live-Texterkennung ist gerade nicht verfügbar.") }
+                            .addOnFailureListener { latestErrorCallback.value("Live text recognition is currently unavailable.") }
                             .addOnCompleteListener {
                                 imageProxy.close()
                                 processing.set(false)
@@ -355,7 +355,7 @@ private fun CameraPreview(
                     } catch (e: Exception) {
                         imageProxy.close()
                         processing.set(false)
-                        latestErrorCallback.value("Live-Texterkennung ist gerade nicht verfügbar.")
+                        latestErrorCallback.value("Live text recognition is currently unavailable.")
                     }
                 }
             }
@@ -409,7 +409,7 @@ private fun CameraPreview(
                         provider.unbindAll()
                         provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
                     } catch (e: Exception) {
-                        latestErrorCallback.value("Die Rückkamera konnte nicht gestartet werden.")
+                        latestErrorCallback.value("The rear camera could not be started.")
                     }
                 }
             }, ContextCompat.getMainExecutor(context))

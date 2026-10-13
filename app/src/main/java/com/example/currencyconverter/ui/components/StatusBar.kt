@@ -25,20 +25,21 @@ import androidx.compose.ui.unit.sp
 import com.example.currencyconverter.data.FetchState
 import java.text.DateFormat
 import java.util.Date
+import java.util.Locale
 
 /** Small gray bar at the bottom: status, last update, refresh button and API attribution. */
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val last = if (lastUpdateMillis > 0) {
-        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(lastUpdateMillis))
+        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.ENGLISH).format(Date(lastUpdateMillis))
     } else {
-        "noch nie"
+        "never"
     }
     val text = when (state) {
-        FetchState.LOADING -> "Kurse werden aktualisiert … (Stand: $last)"
-        FetchState.OFFLINE -> "Offline – letzter Stand: $last"
-        else -> "Letzter Kursstand: $last"
+        FetchState.LOADING -> "Updating rates … (as of $last)"
+        FetchState.OFFLINE -> "Offline – last update: $last"
+        else -> "Last rate update: $last"
     }
 
     Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
@@ -65,7 +66,7 @@ fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) 
                 enabled = state != FetchState.LOADING,
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Kurse aktualisieren", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Refresh, contentDescription = "Refresh rates", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }

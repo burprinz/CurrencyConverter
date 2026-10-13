@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.data.model.Currency
+import com.example.currencyconverter.data.model.CurrencyKind
 
 /** Compact two-row currency card that fits narrow phone screens. */
 @Composable
@@ -39,6 +40,10 @@ fun CurrencyRow(
     onRoundUp: () -> Unit,
     onSetToOne: () -> Unit
 ) {
+    val roundingDigits = if (currency.kind == CurrencyKind.REAL) {
+        runCatching { java.util.Currency.getInstance(currency.id).defaultFractionDigits }
+            .getOrNull()?.takeIf { it >= 0 } ?: 2
+    } else 2
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -48,7 +53,7 @@ fun CurrencyRow(
                     Text(currency.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Aus Liste entfernen")
+                    Icon(Icons.Default.Close, contentDescription = "Remove from list")
                 }
             }
             Row(
@@ -59,20 +64,20 @@ fun CurrencyRow(
                 OutlinedTextField(
                     value = value,
                     onValueChange = onValueChange,
-                    label = { Text("Betrag") },
+                    label = { Text("Amount") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = onRoundDown, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Abrunden")
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Round down to $roundingDigits decimal places")
                 }
                 IconButton(onClick = onRoundUp, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Aufrunden")
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Round up to $roundingDigits decimal places")
                 }
                 IconButton(
                     onClick = onSetToOne,
-                    modifier = Modifier.size(40.dp).semantics { contentDescription = "Betrag auf eins setzen" }
+                    modifier = Modifier.size(40.dp).semantics { contentDescription = "Set amount to one" }
                 ) {
                     Text("1", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }

@@ -44,11 +44,11 @@ fun UnlockScreen(vm: MainViewModel) {
             ) {
                 Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Fan-Währungen", style = MaterialTheme.typography.titleMedium)
-                        Text("Füge besondere Währungen zu deiner Umrechnungsliste hinzu.", style = MaterialTheme.typography.bodySmall)
+                        Text("Fan currencies", style = MaterialTheme.typography.titleMedium)
+                        Text("Add special currencies to your conversion list.", style = MaterialTheme.typography.bodySmall)
                     }
                     IconButton(onClick = { showInfo = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "Information zu Fan-Währungen")
+                        Icon(Icons.Default.Info, contentDescription = "Information about fan currencies")
                     }
                 }
             }
@@ -64,7 +64,7 @@ fun UnlockScreen(vm: MainViewModel) {
                     Text(c.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Button(onClick = { vm.unlock(c.id) }, enabled = !unlocked) {
-                    Text(if (unlocked) "Freigeschaltet" else "Hinzufügen")
+                    Text(if (unlocked) "Added" else "Add")
                 }
             }
             HorizontalDivider()
@@ -74,9 +74,9 @@ fun UnlockScreen(vm: MainViewModel) {
     if (showInfo) {
         AlertDialog(
             onDismissRequest = { showInfo = false },
-            title = { Text("Hinweis zu Fan-Währungen") },
-            text = { Text("Die Werte der meisten Fan-Währungen sind Schätzungen aus der Community und keine offiziellen Wechselkurse. Sie dienen nur zum Vergleichen und können vom tatsächlichen Wert abweichen.") },
-            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("Verstanden") } }
+            title = { Text("About fan currencies") },
+            text = { Text("Most fan currency values are community estimates, not official exchange rates. They are for comparison only and may differ from real-world values.") },
+            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("Got it") } }
         )
     }
 }

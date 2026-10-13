@@ -15,6 +15,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -32,15 +33,17 @@ import com.example.currencyconverter.ui.screens.CameraConvertScreen
 import com.example.currencyconverter.ui.screens.ConverterListScreen
 import com.example.currencyconverter.ui.screens.SelectScreen
 import com.example.currencyconverter.ui.screens.UnlockScreen
+import com.example.currencyconverter.ui.screens.RateHistoryScreen
 import kotlinx.coroutines.launch
 
 enum class Screen(val title: String) {
-    LIST("Umrechnen"),
-    FAVORITES("Favoriten"),
-    SELECT("Währungen auswählen"),
-    ADD_NEW("Eigene Währung"),
-    UNLOCK("Fan-Währungen"),
-    CAMERA("Mit Kamera umrechnen")
+    LIST("Convert"),
+    FAVORITES("Favorites"),
+    RATES("Rate history"),
+    CAMERA("Camera converter"),
+    SELECT("Choose currencies"),
+    ADD_NEW("Custom currencies"),
+    UNLOCK("Fan currencies")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +58,7 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
         drawerContent = {
             ModalDrawerSheet {
                 Text(
-                    "Währungsrechner",
+                    "Currency Converter",
                     style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(24.dp)
                 )
@@ -77,6 +80,11 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
             topBar = {
                 TopAppBar(
                     title = { Text(screen.title) },
+                    actions = {
+                        TextButton(onClick = { vm.undoLastChange() }, enabled = vm.canUndo) {
+                            Text("Undo")
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -100,6 +108,7 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
                     Screen.ADD_NEW -> AddCurrencyScreen(vm, onGoToConverter = { screen = Screen.LIST })
                     Screen.UNLOCK -> UnlockScreen(vm)
                     Screen.CAMERA -> CameraConvertScreen(vm)
+                    Screen.RATES -> RateHistoryScreen(vm)
                 }
             }
         }
