@@ -54,6 +54,15 @@ object FunCurrencies {
         Currency("fun_gil", "Gil", CurrencyKind.FUN, "JPY", 1.0, "Final Fantasy · Fan estimate: 1 ≈ 1 JPY", "Video games"),
 
         // Approximation from a US Marketplace pack; store bundles and regional prices vary.
-        Currency("fun_minecoin", "Minecoin", CurrencyKind.FUN, "USD", 1.99 / 320.0, "Minecraft · US store estimate: 320 ≈ 1.99 USD", "Video games")
+        Currency("fun_minecoin", "Minecoin", CurrencyKind.FUN, "USD", 1.99 / 320.0, "Minecraft · US store estimate: 320 ≈ 1.99 USD", "Video games"),
+
+        // DevEx cash-out estimate for eligible Earned Robux only; retail purchase value differs.
+        Currency("fun_robux", "Robux", CurrencyKind.FUN, "USD", 0.0038, "Roblox · DevEx estimate per eligible Earned Robux; not the purchase price", "Video games"),
+
+        // Approximation from the US 800 V-Bucks pack; pack sizes and regional prices vary.
+        Currency("fun_vbucks", "V-Bucks", CurrencyKind.FUN, "USD", 8.99 / 800.0, "Fortnite · US store estimate: 800 ≈ 8.99 USD; regional prices vary", "Video games"),
+
+        // Illustrative North American bundle estimate; RP prices vary by region and bundle.
+        Currency("fun_riot_points", "Riot Points", CurrencyKind.FUN, "USD", 10.0 / 1380.0, "League of Legends · illustrative US estimate: 1,380 ≈ 10 USD; prices vary", "Video games")
     )
 }
