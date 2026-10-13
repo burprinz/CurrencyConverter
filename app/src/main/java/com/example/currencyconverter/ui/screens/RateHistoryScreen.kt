@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +40,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.nativeCanvas
 import android.graphics.Paint
@@ -196,70 +196,84 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
     val labelColor = MaterialTheme.colorScheme.onSurface
     Column(modifier.padding(vertical = 8.dp)) {
         Text("Exchange rate (\u0024quote per 1 \u0024base)", style = MaterialTheme.typography.labelMedium)
-        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
-            Canvas(Modifier.fillMaxSize().pointerInput(points) {
+        Canvas(Modifier.fillMaxWidth().weight(1f).pointerInput(points) {
                 awaitPointerEventScope {
                     while (true) {
-                        val event = awaitPointerEvent()
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        event.changes.forEach { it.consume() }
                         when (event.type) {
                             PointerEventType.Move, PointerEventType.Press -> {
-                                if (points.isNotEmpty()) {
+                                if (points.isNotEmpty() && event.changes.isNotEmpty()) {
                                     val inset = 58.dp.toPx()
                                     val plotWidth = (size.width - inset - 10.dp.toPx()).coerceAtLeast(1f)
                                     val fraction = ((event.changes.first().position.x - inset) / plotWidth).coerceIn(0f, 1f)
                                     selectedIndex = (fraction * (points.size - 1)).toInt()
                                 }
                             }
-                            PointerEventType.Exit, PointerEventType.Release -> selectedIndex = null
+                            PointerEventType.Exit -> selectedIndex = null
                         }
                     }
                 }
             }) {
-                if (points.size < 2) return@Canvas
-        val min = points.minOf { it.rate }
-        val max = points.maxOf { it.rate }
-        val range = (max - min).takeIf { it > 0.0 } ?: max * 0.01
-        val left = 58.dp.toPx()
-        val right = 10.dp.toPx()
-        val top = 12.dp.toPx()
-        val bottom = 28.dp.toPx()
-        val width = size.width - left - right
-        val height = size.height - top - bottom
-        val native = drawContext.canvas.nativeCanvas
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = android.graphics.Color.argb((labelColor.alpha * 255).toInt(), (labelColor.red * 255).toInt(), (labelColor.green * 255).toInt(), (labelColor.blue * 255).toInt())
-            textSize = 11.dp.toPx()
-            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-        }
-        repeat(5) { row ->
-            val fraction = row / 4f
-            val y = top + height * fraction
-            drawLine(grid, Offset(left, y), Offset(size.width - right, y), strokeWidth = 1.dp.toPx())
-            native.drawText(formatAmount(max - range * fraction), 0f, y + paint.textSize / 3f, paint)
-        }
-        val datePaint = Paint(paint).apply { textSize = 10.dp.toPx() }
-        native.drawText(points.first().date.toString(), left, size.height - 4.dp.toPx(), datePaint)
-        val lastDate = points.last().date.toString()
-        native.drawText(lastDate, size.width - right - datePaint.measureText(lastDate), size.height - 4.dp.toPx(), datePaint)
-        val path = Path()
-        points.forEachIndexed { index, point ->
-            val x = left + width * index / (points.size - 1).toFloat()
-            val y = top + height * (1f - ((point.rate - min) / range).toFloat())
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
-        selectedIndex?.let { index ->
-            val point = points[index]
-            val x = left + width * index / (points.size - 1).toFloat()
-            val y = top + height * (1f - ((point.rate - min) / range).toFloat())
-            drawLine(color.copy(alpha = 0.5f), Offset(x, top), Offset(x, top + height), strokeWidth = 1.dp.toPx())
-            drawCircle(color, 5.dp.toPx(), Offset(x, y))
-        }
+                if (points.isEmpty()) return@Canvas
+                val min = points.minOf { it.rate }
+                val max = points.maxOf { it.rate }
+                val range = (max - min).takeIf { it > 0.0 } ?: max * 0.01
+                val left = 64.dp.toPx()
+                val right = 10.dp.toPx()
+                val top = 12.dp.toPx()
+                val bottom = 10.dp.toPx()
+                val width = size.width - left - right
+                val height = size.height - top - bottom
+                val native = drawContext.canvas.nativeCanvas
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    this.color = android.graphics.Color.argb((labelColor.alpha * 255).toInt(), (labelColor.red * 255).toInt(), (labelColor.green * 255).toInt(), (labelColor.blue * 255).toInt())
+                    textSize = 11.dp.toPx()
+                    typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                }
+                repeat(5) { row ->
+                    val fraction = row / 4f
+                    val y = top + height * fraction
+                    drawLine(grid, Offset(left, y), Offset(size.width - right, y), strokeWidth = 1.dp.toPx())
+                    val value = formatAmount(max - range * fraction)
+                    native.drawText(value, left - paint.measureText(value) - 8.dp.toPx(), y + paint.textSize / 3f, paint)
+                }
+                if (points.size == 1) {
+                    drawCircle(color, 5.dp.toPx(), Offset(left + width / 2f, top + height / 2f))
+                } else {
+                    val path = Path()
+                    points.forEachIndexed { index, point ->
+                        val x = left + width * index / (points.size - 1).toFloat()
+                        val y = top + height * (1f - ((point.rate - min) / range).toFloat())
+                        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
+                    selectedIndex?.let { index ->
+                        val point = points[index]
+                        val x = left + width * index / (points.size - 1).toFloat()
+                        val y = top + height * (1f - ((point.rate - min) / range).toFloat())
+                        drawLine(color.copy(alpha = 0.5f), Offset(x, top), Offset(x, top + height), strokeWidth = 1.dp.toPx())
+                        drawCircle(color, 5.dp.toPx(), Offset(x, y))
+                    }
+                }
             }
-            Text("Date", style = MaterialTheme.typography.labelSmall, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            selectedIndex?.let { index ->
-                val point = points[index]
-                Text("${point.date}: 1 $base = ${formatAmount(point.rate)} $quote", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Row(Modifier.fillMaxWidth().padding(start = 64.dp, end = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(points.first().date.toString(), style = MaterialTheme.typography.labelSmall)
+            Text(points.last().date.toString(), style = MaterialTheme.typography.labelSmall)
+        }
+        Text("Date", style = MaterialTheme.typography.labelSmall, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Card(
+            modifier = Modifier.fillMaxWidth().height(44.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Box(Modifier.fillMaxSize().padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) {
+                val point = selectedIndex?.let(points::getOrNull)
+                Text(
+                    point?.let { "${it.date}: 1 $base = ${formatAmount(it.rate)} $quote" } ?: "Drag across the chart to inspect a rate",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    maxLines = 1
+                )
             }
         }
     }
