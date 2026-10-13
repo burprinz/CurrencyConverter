@@ -56,6 +56,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var language by mutableStateOf(storage.language)
         private set
+    var themeMode by mutableStateOf(storage.themeMode)
+        private set
+
+    fun changeThemeMode(mode: String) {
+        if (mode !in setOf("light", "dark", "system")) return
+        themeMode = mode
+        storage.themeMode = mode
+    }
 
     fun changeLanguage(code: String) {
         if (code !in setOf("en", "de", "es")) return

@@ -55,6 +55,10 @@ class AppStorage(context: Context) {
         get() = prefs.getString("language", "en") ?: "en"
         set(value) { prefs.edit().putString("language", value).apply() }
 
+    var themeMode: String
+        get() = prefs.getString("theme_mode", "system") ?: "system"
+        set(value) { prefs.edit().putString("theme_mode", value).apply() }
+
     var customCurrencies: List<Currency>
         get() = try {
             val arr = JSONArray(prefs.getString("custom", "[]"))

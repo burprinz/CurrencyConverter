@@ -53,7 +53,7 @@ enum class Screen(val title: String) {
 @Composable
 fun CurrencyApp(vm: MainViewModel = viewModel()) {
     ProvideAppLanguage(vm.language) {
-        AppTheme { CurrencyAppContent(vm) }
+        AppTheme(vm.themeMode) { CurrencyAppContent(vm) }
     }
 }
 
