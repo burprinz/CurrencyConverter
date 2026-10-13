@@ -92,6 +92,15 @@ private val moreLanguageTranslations = mapOf(
     "sw" to mapOf("Convert" to "Badili", "Favorites" to "Vipendwa", "Rate history" to "Historia ya viwango", "Camera converter" to "Kibadilishaji cha kamera", "Choose currencies" to "Chagua sarafu", "Custom currencies" to "Sarafu maalum", "Fan currencies" to "Sarafu za mashabiki", "Settings" to "Mipangilio", "Amount" to "Kiasi", "Search currency" to "Tafuta sarafu", "Day" to "Siku", "Week" to "Wiki", "Month" to "Mwezi", "Year" to "Mwaka", "All time" to "Muda wote", "Theme" to "Mandhari", "Language" to "Lugha", "Light" to "Mwanga", "Dark" to "Giza", "System" to "Mfumo", "Cancel" to "Ghairi", "Create" to "Unda", "Delete" to "Futa", "Retry" to "Jaribu tena", "Add" to "Ongeza", "Edit" to "Hariri", "Search language" to "Tafuta lugha")
 )
 
+/** Translation for the new quick-entry strip; other labels continue using the normal dictionaries. */
+private val quickAmountTranslations = mapOf(
+    "en" to "Quick amounts", "de" to "Schnellbeträge", "es" to "Importes rápidos", "zh" to "快捷金额", "ja" to "クイック金額",
+    "hi" to "त्वरित राशियाँ", "ar" to "مبالغ سريعة", "fr" to "Montants rapides", "bn" to "দ্রুত পরিমাণ", "pt" to "Valores rápidos",
+    "ru" to "Быстрые суммы", "id" to "Jumlah cepat", "ur" to "فوری رقوم", "tr" to "Hızlı tutarlar", "vi" to "Số tiền nhanh",
+    "th" to "จำนวนเงินด่วน", "ko" to "빠른 금액", "it" to "Importi rapidi", "nl" to "Snelle bedragen", "pl" to "Szybkie kwoty",
+    "ms" to "Jumlah pantas", "sw" to "Kiasi cha haraka"
+)
+
 /** Looks up a translated label and renders it with Material Text's layout options. */
 @Composable
 fun LocalizedText(
@@ -117,6 +126,7 @@ fun LocalizedText(
     // Some strings include live values (for example a date or rate), so they are handled as prefixes below.
     // Exact translations are looked up by their English source text; unknown text safely stays readable in English.
     val translated = when {
+        text == "Quick amounts" -> quickAmountTranslations[language] ?: text
         text == "Other" && language == "de" -> "Sonstiges"
         text == "Other" && language == "es" -> "Otros"
         text == "Other" && language == "fr" -> "Autre"

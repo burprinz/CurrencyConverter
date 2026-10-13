@@ -162,6 +162,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         setActive(id, cleanText)
     }
 
+    /**
+     * Sets a preset amount in [currency], making it the source for every other visible conversion.
+     * One tap creates one undo step, just like rounding or setting the amount to one.
+     */
+    fun setQuickAmount(currency: Currency, amount: Int) {
+        if (amount < 0) return
+        val text = amount.toString()
+        if (currency.id == activeId && text == activeText) return
+        saveUndoSnapshot()
+        setActive(currency.id, text)
+    }
+
     fun roundDown(c: Currency) {
         amountOf(c)?.let {
             val rounded = roundedText(it, c, RoundingMode.FLOOR)
