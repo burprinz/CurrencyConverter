@@ -19,6 +19,7 @@ object RatesApi {
     /** Parsed rates plus their original JSON so the repository can cache the response for offline use. */
     class Result(val rawJson: String, val rates: Map<String, Double>)
 
+    /** Performs blocking URL I/O on Dispatchers.IO and validates that the response has usable rates. */
     suspend fun fetchLatest(): Result = withContext(Dispatchers.IO) {
         val conn = URL(LATEST_URL).openConnection() as HttpURLConnection
         try {
@@ -34,6 +35,7 @@ object RatesApi {
         }
     }
 
+    /** Extracts only finite, positive rates; an absent or malformed cache safely becomes empty. */
     fun parseRates(json: String?): Map<String, Double> {
         if (json == null) return emptyMap()
         return try {

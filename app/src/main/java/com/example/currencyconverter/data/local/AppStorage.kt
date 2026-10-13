@@ -9,6 +9,9 @@ import org.json.JSONObject
 /**
  * Small persistence layer backed by Android SharedPreferences.
  * It stores rates and user choices; UI state itself stays in [com.example.currencyconverter.ui.MainViewModel].
+ * Each property translates one app concept to a stable preference key. Structured values such as
+ * custom currencies and color assignments are encoded as JSON; simple sets/lists use preferences
+ * primitives so they can be read synchronously when the view model starts.
  */
 class AppStorage(context: Context) {
 
@@ -45,6 +48,7 @@ class AppStorage(context: Context) {
 
     var currencyColors: Map<String, Int>
         get() = try {
+            // A malformed or old color record should not prevent the rest of the app from starting.
             val json = JSONObject(prefs.getString("currency_colors", "{}") ?: "{}")
             buildMap { val keys = json.keys(); while (keys.hasNext()) { val key = keys.next(); put(key, json.getInt(key)) } }
         } catch (_: Exception) { emptyMap() }
@@ -64,6 +68,7 @@ class AppStorage(context: Context) {
 
     var customCurrencies: List<Currency>
         get() = try {
+            // Reconstruct only user-created fields; kind is always CUSTOM and is not user-editable.
             val arr = JSONArray(prefs.getString("custom", "[]"))
             (0 until arr.length()).map { i ->
                 val o = arr.getJSONObject(i)

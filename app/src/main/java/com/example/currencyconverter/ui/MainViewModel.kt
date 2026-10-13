@@ -25,6 +25,8 @@ import java.math.RoundingMode
 /**
  * Shared screen state and app actions live here so Compose screens stay mostly presentational.
  * [AppStorage] persists user choices, while [CurrencyRepository] loads/caches exchange rates.
+ * The view model also derives display lists from the stored IDs and the latest rates; screens send
+ * user intent here and observe the resulting Compose state rather than implementing business rules.
  */
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -94,6 +96,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val canUndo: Boolean get() = undoHistory.isNotEmpty()
 
     // ---- derived state ----------------------------------------------------
+    /** Builds display models from API codes; recomposition is limited to changes in rates/language. */
     val realCurrencies: List<Currency> by derivedStateOf {
         rates.keys
             .map { Currency(it, currencyDisplayName(it, language), CurrencyKind.REAL) }
@@ -101,6 +104,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Own currencies + unlocked fun currencies (the "Custom / Fun" dropdown). */
+    /** Combines user-defined entries with only the fictional currencies the user has unlocked. */
     val customAndFunCurrencies: List<Currency> by derivedStateOf {
         customCurrencies + FunCurrencies.all.filter { it.id in unlockedIds }
     }
@@ -118,6 +122,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ---- rates ------------------------------------------------------------
+    /** Refreshes rates asynchronously and preserves cached rates if the request cannot complete. */
     fun refresh() {
         if (fetchState == FetchState.LOADING) return
         viewModelScope.launch {
@@ -137,6 +142,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ---- values -----------------------------------------------------------
     private val converter get() = CurrencyConverter(rates)
 
+    /** Resolves the edited amount once, then derives every other row from the selected source row. */
     private fun amountOf(c: Currency): Double? {
         val active = activeId?.let { knownById[it] } ?: return null
         val amount = parseAmount(activeText) ?: return null
@@ -153,10 +159,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         storage.activeText = text
     }
 
+    /** Makes [id] the source row and sanitizes its raw editable text before persisting it. */
     fun onValueChange(id: String, text: String) {
         val cleanText = sanitizeAmountInput(text)
         if (id == activeId && cleanText == activeText) return
         val now = android.os.SystemClock.elapsedRealtime()
+        // Group a burst of keystrokes into one undo step so undo restores the value before editing.
         if (now - lastTypedChangeAt > 700L) saveUndoSnapshot()
         lastTypedChangeAt = now
         setActive(id, cleanText)
@@ -174,6 +182,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         setActive(currency.id, text)
     }
 
+    /** Floors the displayed amount to the currency's normal minor-unit precision. */
     fun roundDown(c: Currency) {
         amountOf(c)?.let {
             val rounded = roundedText(it, c, RoundingMode.FLOOR)
@@ -183,6 +192,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Ceils the displayed amount to the currency's normal minor-unit precision. */
     fun roundUp(c: Currency) {
         amountOf(c)?.let {
             val rounded = roundedText(it, c, RoundingMode.CEILING)
@@ -203,6 +213,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             .getOrNull()?.takeIf { it >= 0 } ?: 2
     } else 2
 
+    /** Sets a row to one unit and makes it the source for all derived rows. */
     fun setToOne(c: Currency) {
         if (c.id == activeId && parseAmount(activeText) == 1.0) return
         saveUndoSnapshot()
@@ -210,6 +221,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun saveUndoSnapshot() {
+        // Keep the history bounded: each snapshot contains only reversible user choices and amount state.
         undoHistory = (undoHistory + UndoSnapshot(
             selectedIds = selectedIds.toList(),
             favoriteIds = favoriteIds.toSet(),
@@ -221,6 +233,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         lastTypedChangeAt = 0L
     }
 
+    /** Restores the most recent reversible snapshot and writes the restored choices back to storage. */
     fun undoLastChange() {
         val previous = undoHistory.lastOrNull() ?: return
         undoHistory = undoHistory.dropLast(1)
@@ -245,6 +258,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         storage.selectedIds = list
     }
 
+    /** Toggles list membership while keeping the active source row valid. */
     fun toggleSelected(id: String) {
         if (id !in knownById) return
         saveUndoSnapshot()
@@ -258,6 +272,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         updateSelected(selectedIds + id)
     }
 
+    /** Removes a selected currency; if it supplied the amount, another selected row becomes source. */
     fun removeFromSelection(id: String) {
         if (id !in selectedIds) return
         saveUndoSnapshot()
@@ -267,7 +282,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private fun removeFromSelectionInternal(id: String) {
         val remaining = selectedIds - id
         if (id == activeId) {
-            // Keep the current values: the next currency becomes the new source.
+            // Keep the current displayed amount: the next currency becomes the new source.
             val next = remaining.firstOrNull()?.let { knownById[it] }
             if (next != null) setActive(next.id, displayValue(next)) else setActive(null, "1")
         }
@@ -275,6 +290,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ---- favorites --------------------------------------------------------
+    /** Adds or removes an ID from the favorite set without changing the conversion selection. */
     fun toggleFavorite(id: String) {
         if (id !in knownById) return
         saveUndoSnapshot()
@@ -283,6 +299,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ---- unlock (later: only via rewarded ad) -----------------------------
+    /** Persists access to one catalog ID so it can appear in currency pickers. */
     fun unlock(id: String) {
         if (id in unlockedIds) return
         saveUndoSnapshot()
@@ -299,6 +316,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (refCode !in rates) return "The reference currency is not available yet. Wait for rates to load."
 
         // Names must be unique (case-insensitive) across real, own and fun currencies.
+        // Validate before saving a snapshot so invalid form submissions do not create empty undo steps.
         val nameTaken = (realCurrencies + customCurrencies.filter { it.id != editingId } + FunCurrencies.all)
             .any { it.name.equals(cleanName, ignoreCase = true) || it.id.equals(cleanName, ignoreCase = true) }
         if (nameTaken) return "A currency with this name already exists."
@@ -323,6 +341,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         return null
     }
 
+    /** Deletes a user currency and removes its references from selection and favorites. */
     fun deleteCustom(id: String) {
         if (customCurrencies.none { it.id == id }) return
         saveUndoSnapshot()

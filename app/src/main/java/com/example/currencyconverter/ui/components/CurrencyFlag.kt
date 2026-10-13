@@ -12,7 +12,10 @@ import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.model.CurrencyKind
 import com.example.currencyconverter.util.currencyFlag
 
-/** Displays a country or region flag for regular currencies only. */
+/**
+ * Displays a country or region flag for regular currencies only.
+ * The lookup is remembered by ISO currency ID, so rebuilding a row does not repeatedly scan locale data.
+ */
 @Composable
 fun CurrencyFlag(currency: Currency) {
     if (currency.kind != CurrencyKind.REAL) return

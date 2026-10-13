@@ -57,10 +57,14 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 
-/** Preset intervals supported by the history screen and the API date-range calculation. */
+/** Preset intervals; each option controls the requested date span and graph summary label. */
 private enum class RatePeriod(val label: String) { DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year"), ALL("All time") }
 
-/** Loads and charts a selected pair of real currencies over the requested time range. */
+/**
+ * Loads and charts a selected pair of real currencies over the requested time range.
+ * A keyed effect reloads when the pair, period, available currencies, or retry counter changes;
+ * cancellation is left to Compose so obsolete network responses cannot replace the current chart.
+ */
 @Composable
 fun RateHistoryScreen(vm: MainViewModel) {
     val uriHandler = LocalUriHandler.current
@@ -82,6 +86,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
     }
     val currencyCodes = currencies.map { it.id }
 
+    // The effect key list makes each visible selection a new request and cancels the previous one.
     LaunchedEffect(base, quote, period, reload, currencyCodes) {
         if (base == quote) {
             points = emptyList()
@@ -193,7 +198,11 @@ private fun SearchCurrencyPicker(label: String, currencies: List<Currency>, sele
     }
 }
 
-/** Draws the rate graph and maps finger movement to the closest data point. */
+/**
+ * Draws the rate graph and maps finger movement to the closest data point.
+ * Rates are linearly mapped into the plot area, y labels show evenly spaced values, and pointer x
+ * is normalized to [0, 1] before selecting the corresponding observation in chronological order.
+ */
 @Composable
 private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: String, modifier: Modifier = Modifier) {
     val color = MaterialTheme.colorScheme.primary
@@ -237,6 +246,7 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
                     textSize = 11.dp.toPx()
                     typeface = Typeface.create("sans-serif", Typeface.NORMAL)
                 }
+                // Five horizontal grid lines use the same normalized scale as the plotted series.
                 repeat(5) { row ->
                     val fraction = row / 4f
                     val y = top + height * fraction
@@ -254,6 +264,7 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                     }
                     drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
+                    // Draw the selected guide and point directly on the series for tactile inspection.
                     selectedIndex?.let { index ->
                         val point = points[index]
                         val x = left + width * index / (points.size - 1).toFloat()

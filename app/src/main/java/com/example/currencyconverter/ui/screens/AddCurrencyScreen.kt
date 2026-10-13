@@ -44,8 +44,12 @@ import com.example.currencyconverter.util.formatAmount
 import com.example.currencyconverter.util.parseAmount
 import com.example.currencyconverter.util.sanitizeAmountInput
 
-/** Create, edit and remove own currencies. */
-/** Form for creating or editing a custom currency relative to a real reference currency. */
+/**
+ * Creates, edits, and removes user-defined currencies.
+ * The form stores text locally while editing, then delegates validation and persistence to the view
+ * model. Existing entries populate the same form; deletion is confirmed before related selections
+ * and favorites are removed by the data layer.
+ */
 @Composable
 fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -60,6 +64,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
 
     val refOptions = vm.realCurrencies.map { it.id }.sorted().ifEmpty { listOf("USD") }
 
+    // Clear both values and transient feedback so a fresh creation never inherits an old edit state.
     fun resetForm() {
         editingId = null
         name = ""
@@ -123,6 +128,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = {
+                        // The screen handles presentation feedback; saveCustom owns business validation.
                         val wasNewCurrency = editingId == null
                         val result = vm.saveCustom(editingId, name, refCode, parseAmount(factorText))
                         if (result == null) {
@@ -159,6 +165,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
             }
         }
 
+        // Stable IDs let LazyColumn preserve row state while the list is edited or reordered.
         items(vm.customCurrencies, key = { it.id }) { c ->
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),

@@ -29,7 +29,11 @@ import java.util.Date
 import java.util.Locale
 
 /** Small gray bar at the bottom: status, last update, refresh button and API attribution. */
-/** Shows rate loading/offline status, the last refresh timestamp, attribution, and refresh action. */
+/**
+ * Shows rate loading/offline status, the last refresh timestamp, attribution, and refresh action.
+ * The timestamp uses the active app locale; the attribution is an external link required by the
+ * free rate endpoint and the refresh control is disabled while a request is already running.
+ */
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
     val uriHandler = LocalUriHandler.current
@@ -39,6 +43,7 @@ fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) 
     } else {
         "never"
     }
+    // Keep the cached date visible during refresh/offline states so stale data is clearly identified.
     val text = when (state) {
         FetchState.LOADING -> "Updating rates … (as of $last)"
         FetchState.OFFLINE -> "Offline – last update: $last"

@@ -9,8 +9,13 @@ import java.net.URL
 /** One dated quote: [rate] is the amount of the selected quote currency for one base unit. */
 data class HistoricalRatePoint(val date: String, val rate: Double)
 
-/** Fetches historical currency quotes from Frankfurter on the IO dispatcher. */
+/**
+ * Fetches historical currency quotes from Frankfurter on the IO dispatcher.
+ * The endpoint returns one JSON row per date; invalid dates and non-positive rates are discarded,
+ * then the remaining observations are sorted so chart x-positions follow time from left to right.
+ */
 object HistoricalRatesApi {
+    /** Downloads a date range; [monthly] asks the API to group older all-time results by month. */
     suspend fun fetch(base: String, quote: String, from: String, to: String, monthly: Boolean = false): List<HistoricalRatePoint> = withContext(Dispatchers.IO) {
         val params = buildString {
             append("base=$base&quotes=$quote&from=$from&to=$to")

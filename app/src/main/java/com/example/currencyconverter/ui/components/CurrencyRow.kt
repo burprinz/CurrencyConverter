@@ -41,7 +41,12 @@ import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.model.CurrencyKind
 
-/** Compact two-row currency card that fits narrow phone screens. */
+/**
+ * Compact currency card: identity and color controls sit above the editable amount row.
+ * The amount is the only editable conversion input; callbacks delegate rounding, removal, and
+ * propagation to the view model. Palette indices are persisted per currency so selection changes
+ * do not lose the user's color choice.
+ */
 @Composable
 fun CurrencyRow(
     currency: Currency,
@@ -56,7 +61,6 @@ fun CurrencyRow(
 ) {
     var paletteOpen by remember { mutableStateOf(false) }
     /** One named swatch; its position in [palette] is the value saved by the view model. */
-    /** One named swatch; its position in [palette] is the value saved by the view model. */
     data class PaletteColor(val name: String, val color: Color)
     val palette = listOf(
         PaletteColor("Coral", Color(0xFFE57373)), PaletteColor("Apricot", Color(0xFFFFA726)),
@@ -65,6 +69,7 @@ fun CurrencyRow(
         PaletteColor("Periwinkle", Color(0xFF64B5F6)), PaletteColor("Lavender", Color(0xFF7986CB)),
         PaletteColor("Lilac", Color(0xFFBA68C8)), PaletteColor("Rose", Color(0xFFF06292))
     )
+    // Derive a subdued card fill and a stronger outline from one accent while preserving text contrast.
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val accent = selectedColor?.let(palette::getOrNull)?.color
     val cardBackground = accent?.let { if (dark) Color(red = it.red * .20f, green = it.green * .20f, blue = it.blue * .20f) else it.copy(alpha = .14f) }

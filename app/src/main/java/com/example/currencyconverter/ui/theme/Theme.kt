@@ -7,7 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-/** Shared light palette used by every screen when light mode is selected. */
+/** Shared light palette used by every screen when light mode is selected; surface/background stay soft. */
 private val LightColors = lightColorScheme(
     primary = Color(0xFF176B5B),
     onPrimary = Color.White,
@@ -30,7 +30,11 @@ private val DarkColors = darkColorScheme(
     secondaryContainer = Color(0xFF394B43)
 )
 
-/** Selects the requested or system theme and provides its Material color scheme to [content]. */
+/**
+ * Selects the requested or system theme and provides its Material color scheme to [content].
+ * Unknown preference values use the operating system setting, which keeps the app resilient to
+ * older or manually edited preferences.
+ */
 @Composable
 fun AppTheme(themeMode: String = "system", content: @Composable () -> Unit) {
     val dark = when (themeMode) {

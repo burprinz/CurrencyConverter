@@ -38,7 +38,7 @@ import com.example.currencyconverter.ui.screens.SettingsScreen
 import com.example.currencyconverter.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
-/** All destinations shown in the navigation drawer and their source-language screen titles. */
+/** All destinations shown in the drawer, in the order the user sees them, and their source titles. */
 enum class Screen(val title: String) {
     LIST("Convert"),
     FAVORITES("Favorites"),
@@ -50,7 +50,7 @@ enum class Screen(val title: String) {
     SETTINGS("Settings")
 }
 
-/** Applies the saved language and theme around the entire app UI. */
+/** Applies the saved language and theme around the entire app UI. The providers wrap navigation too. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrencyApp(vm: MainViewModel = viewModel()) {
@@ -59,7 +59,11 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
     }
 }
 
-/** Builds the app shell (drawer, app bar, status bar) and displays the selected destination. */
+/**
+ * Builds the app shell (drawer, app bar, status bar) and displays the selected destination.
+ * [screen] is saveable across configuration changes; each drawer choice updates it and closes the
+ * modal drawer. The screen-level undo action is shown only on destinations that can mutate state.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CurrencyAppContent(vm: MainViewModel) {

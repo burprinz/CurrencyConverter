@@ -3,6 +3,7 @@ package com.example.currencyconverter.util
 import java.util.Currency
 import java.util.Locale
 
+/** Representative regions for currencies shared by multiple countries or lacking a country code. */
 private val preferredRegions = mapOf(
     "EUR" to "EU",
     "USD" to "US",
@@ -30,7 +31,11 @@ private val preferredRegions = mapOf(
     "XPF" to "PF"
 )
 
-/** Returns the flag for the main country or region using an ISO currency code. */
+/**
+ * Returns the flag for the main country or region using an ISO currency code.
+ * Common/shared currencies use [preferredRegions]; other ISO currencies search the country list,
+ * and currencies without a defensible country association fall back to a globe symbol.
+ */
 fun currencyFlag(currencyCode: String): String {
     val code = currencyCode.uppercase(Locale.ROOT)
     val region = preferredRegions[code] ?: Locale.getISOCountries().firstOrNull { countryCode ->
@@ -42,6 +47,7 @@ fun currencyFlag(currencyCode: String): String {
     return region.toFlagEmoji()
 }
 
+/** Converts a two-letter ISO region code to the pair of Unicode regional-indicator code points. */
 private fun String.toFlagEmoji(): String = map { character ->
     String(Character.toChars(0x1F1E6 + character.code - 'A'.code))
 }.joinToString("")

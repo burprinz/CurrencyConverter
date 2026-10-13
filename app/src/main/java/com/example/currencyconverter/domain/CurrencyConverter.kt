@@ -6,6 +6,8 @@ import com.example.currencyconverter.data.model.CurrencyKind
 /**
  * Converts amounts without Android/UI dependencies. [rates] stores units of each real currency per USD.
  * For custom/fun currencies, the catalog factor says how much of [Currency.refCode] one unit represents.
+ * Every source is normalized to “units per USD” first, then converted using a ratio. This common
+ * intermediate unit prevents separate pairwise formulas from drifting or reversing the rate.
  */
 class CurrencyConverter(private val rates: Map<String, Double>) {
 
@@ -19,6 +21,7 @@ class CurrencyConverter(private val rates: Map<String, Double>) {
         }
     }
 
+    /** Converts one amount; null signals missing or invalid reference data rather than a fake zero. */
     fun convert(amount: Double, from: Currency, to: Currency): Double? {
         // Convert through USD as a common reference: amount * (target units/USD) / (source units/USD).
         if (!amount.isFinite()) return null

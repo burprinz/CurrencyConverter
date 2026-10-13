@@ -6,6 +6,9 @@ data class DetectedAmount(val value: Double, val display: String)
 /**
  * Picks a likely price from OCR output. Prices are commonly next to a currency symbol
  * or a label such as "Preis"; dates, lot numbers and other long identifiers are ignored.
+ * Each candidate gets a relevance score from nearby price words, currency symbols, and decimal
+ * punctuation. The winning candidate is the highest-scoring plausible value, with the larger value
+ * breaking ties; this avoids blindly selecting a barcode or a product's weight.
  */
 fun findLargestAmount(text: String): DetectedAmount? {
     val lines = text.lineSequence().toList()
@@ -53,6 +56,7 @@ private fun normalizeRecognizedNumber(raw: String): String? {
     val dotIndex = value.lastIndexOf('.')
     if (commaIndex < 0 && dotIndex < 0) return value.filter(Char::isDigit).ifEmpty { null }
 
+    // If both separators occur, the rightmost is decimal and the earlier one is grouping punctuation.
     if (commaIndex >= 0 && dotIndex >= 0) {
         val decimalIndex = maxOf(commaIndex, dotIndex)
         val whole = value.substring(0, decimalIndex).filter(Char::isDigit)

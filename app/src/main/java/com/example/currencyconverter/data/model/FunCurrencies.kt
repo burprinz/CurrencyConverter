@@ -1,6 +1,11 @@
 package com.example.currencyconverter.data.model
 
-/** Catalog of fun currencies that can be unlocked. Add new entries here. */
+/**
+ * Built-in catalog of fictional, game, and rewards currencies that can be unlocked.
+ * Factors are estimates relative to a real reference currency; descriptions record provenance or
+ * uncertainty so the UI can label them honestly. Add catalog entries here rather than persisting
+ * them as custom currencies, which keeps IDs stable across app releases.
+ */
 object FunCurrencies {
     val all: List<Currency> = listOf(
         // 1 Berry = 1 JPY

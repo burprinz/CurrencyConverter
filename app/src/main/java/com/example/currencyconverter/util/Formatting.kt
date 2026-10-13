@@ -17,11 +17,11 @@ fun formatAmount(value: Double): String {
     return if (s.contains('.')) s.trimEnd('0').trimEnd('.') else s
 }
 
-/** Accepts both "1.5" and "1,5". */
+/** Accepts both decimal separators; parsing rejects NaN and infinity so they never reach the UI. */
 fun parseAmount(text: String): Double? =
     text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
 
-/** Keeps numeric input editable while allowing at most one decimal separator. */
+/** Keeps numeric input editable while allowing at most one decimal separator and retaining its style. */
 fun sanitizeAmountInput(text: String): String {
     val separatorIndex = text.indexOfFirst { it == '.' || it == ',' }
     if (separatorIndex < 0) return text.filter(Char::isDigit)
@@ -35,7 +35,7 @@ fun sanitizeAmountInput(text: String): String {
 fun roundClean(value: Double): Double =
     BigDecimal(value).setScale(6, RoundingMode.HALF_UP).toDouble()
 
-/** Human readable English name for an ISO code; falls back to the code. */
+/** Human-readable currency name for an ISO code in [language]; falls back to the code if unknown. */
 fun currencyDisplayName(code: String, language: String = "en"): String = try {
     val locale = Locale.forLanguageTag(language)
     java.util.Currency.getInstance(code).getDisplayName(locale)

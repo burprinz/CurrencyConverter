@@ -27,7 +27,11 @@ import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.ui.MainViewModel
 import com.example.currencyconverter.ui.components.CurrencyRow
 
-/** Shows all selected currencies, or only favorites when [favoritesOnly] is enabled. */
+/**
+ * Shows all selected currencies, or only favorites when [favoritesOnly] is enabled.
+ * The empty state explains the next action; otherwise quick-amount chips update the active source
+ * row and each [CurrencyRow] delegates editing, rounding, color, and removal actions to the view model.
+ */
 @Composable
 fun ConverterListScreen(
     vm: MainViewModel,
@@ -36,6 +40,7 @@ fun ConverterListScreen(
 ) {
     val visible = vm.selectedCurrencies.filter { !favoritesOnly || it.id in vm.favoriteIds }
 
+    // Keep first-use guidance in place of an empty list so the primary action is immediately visible.
     if (visible.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {

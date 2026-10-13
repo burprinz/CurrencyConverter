@@ -79,7 +79,12 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-/** Owns camera permissions, live OCR, optional capture, and displaying the converted amount. */
+/**
+ * Owns camera permissions, live OCR, optional capture, and displaying the converted amount.
+ * CameraX supplies preview frames to on-device ML Kit; [findLargestAmount] ranks text candidates,
+ * then the same currency conversion domain code used elsewhere formats the detected amount.
+ * A captured bitmap exists only in Compose memory and is discarded when the user cancels it.
+ */
 @Composable
 fun CameraConvertScreen(vm: MainViewModel) {
     val context = LocalContext.current
@@ -117,6 +122,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
     val fromCurrency = currencies.firstOrNull { it.id == fromId }
     val toCurrency = currencies.firstOrNull { it.id == toId }
 
+    // Live OCR is ignored while a still image is being analyzed to avoid competing results.
     val onLiveText: (String) -> Unit = { text ->
         if (photoBitmap == null) {
             val candidate = findLargestAmount(text)
@@ -220,6 +226,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
             if (photoBitmap == null) {
                 OutlinedButton(
                     onClick = {
+                        // PreviewView.bitmap makes a temporary in-memory copy; nothing is written to MediaStore.
                         val frame = previewView?.bitmap
                         if (frame == null) {
                             cameraMessage = "The camera image could not be captured."
@@ -316,7 +323,11 @@ private fun CurrencyPicker(
     }
 }
 
-/** Displays the rear camera and forwards recognized text or camera errors to the screen. */
+/**
+ * Displays the rear camera and forwards recognized text or camera errors to the screen.
+ * Analysis is throttled to at most four frames per second and guarded by an atomic flag so only one
+ * ML Kit task is in flight. Every ImageProxy is closed on completion or error to release camera buffers.
+ */
 @Composable
 @OptIn(ExperimentalGetImage::class)
 private fun CameraPreview(
@@ -338,6 +349,7 @@ private fun CameraPreview(
     val analyzer = remember(recognizer) {
         ImageAnalysis.Analyzer { imageProxy ->
             val now = SystemClock.elapsedRealtime()
+            // Drop stale frames rather than queueing them; fresh frames matter more than processing every frame.
             if (latestPhotoMode.value || now - lastFrameAt.get() < 250L || !processing.compareAndSet(false, true)) {
                 imageProxy.close()
             } else {
@@ -394,8 +406,8 @@ private fun CameraPreview(
                         val provider = providerFuture.get()
                         cameraProvider = provider
                         val preview = Preview.Builder().build().also { it.setSurfaceProvider(view.surfaceProvider) }
-                        // Small shelf-label punctuation is easy to lose at the default
-                        // analyzer resolution. Request a sharper frame for OCR.
+                        // Small shelf-label punctuation is easy to lose at the default analyzer resolution,
+                        // so prefer a sharper frame while letting CameraX choose a supported size nearby.
                         val resolutionSelector = ResolutionSelector.Builder()
                             .setResolutionStrategy(
                                 ResolutionStrategy(

@@ -34,13 +34,17 @@ import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.data.model.FunCurrencies
 import com.example.currencyconverter.ui.MainViewModel
 
-/** Fan currencies with an explanation of their estimated values. */
-/** Catalog for browsing and unlocking fictional, game, and loyalty-program currencies. */
+/**
+ * Catalog for browsing and unlocking fictional, game, and loyalty-program currencies.
+ * Category chips filter the built-in catalog without modifying it. Unlocking adds the stable ID
+ * to the user's saved set, which makes that entry available to the selection and conversion screens.
+ */
 @Composable
 fun UnlockScreen(vm: MainViewModel) {
     var showInfo by rememberSaveable { mutableStateOf(false) }
     var selectedCategory by rememberSaveable { mutableStateOf("All") }
     val categories = listOf("All", "Anime", "Movies & books", "Series", "Video games", "Other")
+    // Keep the canonical catalog intact; only the displayed list responds to the active filter.
     val filteredCurrencies = if (selectedCategory == "All") FunCurrencies.all else FunCurrencies.all.filter { it.category == selectedCategory }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {

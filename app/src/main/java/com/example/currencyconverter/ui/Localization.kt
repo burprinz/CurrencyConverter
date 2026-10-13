@@ -17,8 +17,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 
+/** Composition-wide language code read by [LocalizedText] and locale-aware formatting helpers. */
 val LocalAppLanguage = staticCompositionLocalOf { "en" }
 
+/** Main German message table; untranslated strings fall back to their English source text. */
 private val german = mapOf(
     "Convert" to "Umrechnen", "Favorites" to "Favoriten", "Rate history" to "Kursverlauf", "Camera converter" to "Kamera-Umrechner", "Choose currencies" to "Währungen auswählen", "Custom currencies" to "Eigene Währungen", "Fan currencies" to "Fan-Währungen", "Settings" to "Einstellungen",
     "Currency Converter" to "Währungsumrechner", "Undo" to "Rückgängig", "Menu" to "Menü", "Refresh rates" to "Kurse aktualisieren",
@@ -36,6 +38,7 @@ private val german = mapOf(
     "Search language" to "Sprache suchen", "German" to "Deutsch", "Spanish" to "Spanisch", "Chinese" to "Chinesisch", "Japanese" to "Japanisch", "English" to "Englisch", "French" to "Französisch", "Italian" to "Italienisch", "Portuguese" to "Portugiesisch"
 )
 
+/** Main Spanish message table, kept separate so language-specific updates are easy to review. */
 private val spanish = mapOf(
     "Convert" to "Convertir", "Favorites" to "Favoritos", "Rate history" to "Historial de tipos", "Camera converter" to "Conversor con cámara", "Choose currencies" to "Elegir monedas", "Custom currencies" to "Monedas personalizadas", "Fan currencies" to "Monedas de fans", "Settings" to "Ajustes",
     "Currency Converter" to "Conversor de monedas", "Undo" to "Deshacer", "Menu" to "Menú", "Refresh rates" to "Actualizar tipos",
@@ -53,6 +56,7 @@ private val spanish = mapOf(
     "Search language" to "Buscar idioma", "German" to "Alemán", "Spanish" to "Español", "Chinese" to "Chino", "Japanese" to "Japonés", "English" to "Inglés", "French" to "Francés", "Italian" to "Italiano", "Portuguese" to "Portugués"
 )
 
+/** Simplified Chinese labels for the most commonly used app flows. */
 private val chinese = mapOf(
     "Convert" to "换算", "Favorites" to "收藏夹", "Rate history" to "汇率历史", "Camera converter" to "相机换算", "Choose currencies" to "选择货币", "Custom currencies" to "自定义货币", "Fan currencies" to "虚构货币", "Settings" to "设置", "Currency Converter" to "货币换算器", "Undo" to "撤销", "Menu" to "菜单", "Refresh rates" to "刷新汇率",
     "No favorites yet" to "还没有收藏", "Tap the star when choosing currencies to find them here quickly." to "选择货币时点击星标，即可在此快速查看。", "Welcome to Currency Converter!" to "欢迎使用货币换算器！", "Choose the currencies you want to compare. They will appear here. Tap an amount to change the conversion." to "选择要比较的货币，它们会显示在这里。点击金额即可更改换算基准。", "Choose favorites" to "选择收藏", "Tap an amount to convert all values." to "点击金额即可换算所有数值。", "Your favorites" to "你的收藏", "Your currencies" to "你的货币", "Amount" to "金额", "Default" to "默认", "Camera access required" to "需要相机权限", "The camera is used only for live text recognition and the optional photo." to "相机仅用于实时文字识别和可选拍照。", "Allow camera" to "允许使用相机", "Recognized conversion" to "识别的换算", "Analyze photo" to "分析照片", "Discard photo" to "丢弃照片",
@@ -60,6 +64,7 @@ private val chinese = mapOf(
     "Add special currencies to your conversion list." to "将特别货币添加到换算列表。", "Added" to "已添加", "Add" to "添加", "About fan currencies" to "关于虚构货币", "Most fan currency values are community estimates, not official exchange rates. They are for comparison only and may differ from real-world values." to "大多数虚构货币价值是社区估算，并非官方汇率，仅供比较，可能与现实价值不同。", "Got it" to "知道了", "Create custom currency" to "创建自定义货币", "Edit currency" to "编辑货币", "Name (e.g. gold coins)" to "名称（例如金币）", "Set a value relative to a reference currency:" to "设置相对于参考货币的价值：", "Enter how many units of the reference currency one unit of your currency is worth." to "输入一单位自定义货币相当于多少参考货币。", "unit" to "单位", "Choose reference currency" to "选择参考货币", "Create" to "创建", "Save changes" to "保存更改", "Cancel" to "取消", "Go to converter" to "前往换算器", "Your custom currencies" to "你的自定义货币", "You have not created any custom currencies yet." to "你还没有创建自定义货币。", "Edit" to "编辑", "Delete" to "删除", "Delete currency?" to "删除货币？", "Light" to "浅色", "Dark" to "深色", "System" to "跟随系统", "Language" to "语言", "Theme" to "主题", "English" to "英语", "German" to "德语", "Spanish" to "西班牙语", "Japanese" to "日语", "Chinese" to "中文", "Search language" to "搜索语言", "About rates" to "关于汇率", "Exchange rates are provided by Frankfurter." to "汇率数据由 Frankfurter 提供。", "Fan currency values are estimates." to "虚构货币价值为估算值。", "Drag across the chart to inspect a rate" to "沿图表滑动以查看汇率", "All" to "全部", "Anime" to "动漫", "Movies & books" to "电影与书籍", "Series" to "电视剧", "Video games" to "电子游戏", "Coral" to "珊瑚色", "Apricot" to "杏色", "Butter" to "奶油黄", "Pistachio" to "开心果绿", "Mint" to "薄荷绿", "Ice blue" to "冰蓝色", "Periwinkle" to "长春花蓝", "Lavender" to "薰衣草紫", "Lilac" to "丁香紫", "Rose" to "玫瑰色"
 )
 
+/** Japanese labels for the most commonly used app flows. */
 private val japanese = mapOf(
     "Convert" to "換算", "Favorites" to "お気に入り", "Rate history" to "為替レート履歴", "Camera converter" to "カメラ換算", "Choose currencies" to "通貨を選択", "Custom currencies" to "カスタム通貨", "Fan currencies" to "架空の通貨", "Settings" to "設定", "Currency Converter" to "通貨換算", "Undo" to "元に戻す", "Menu" to "メニュー", "Refresh rates" to "レートを更新",
     "No favorites yet" to "お気に入りはまだありません", "Tap the star when choosing currencies to find them here quickly." to "通貨選択時に星をタップすると、ここからすぐに確認できます。", "Welcome to Currency Converter!" to "通貨換算アプリへようこそ！", "Choose the currencies you want to compare. They will appear here. Tap an amount to change the conversion." to "比較したい通貨を選ぶとここに表示されます。金額をタップすると換算元を変更できます。", "Choose favorites" to "お気に入りを選択", "Tap an amount to convert all values." to "金額をタップしてすべての値を換算します。", "Your favorites" to "お気に入り", "Your currencies" to "通貨", "Amount" to "金額", "Default" to "標準", "Camera access required" to "カメラへのアクセスが必要です", "The camera is used only for live text recognition and the optional photo." to "カメラはリアルタイムの文字認識と任意の撮影にのみ使用します。", "Allow camera" to "カメラを許可", "Recognized conversion" to "認識した換算", "Analyze photo" to "写真を解析", "Discard photo" to "写真を破棄",
@@ -67,6 +72,7 @@ private val japanese = mapOf(
     "Add special currencies to your conversion list." to "特別な通貨を換算リストに追加します。", "Added" to "追加済み", "Add" to "追加", "About fan currencies" to "架空の通貨について", "Most fan currency values are community estimates, not official exchange rates. They are for comparison only and may differ from real-world values." to "架空通貨の多くはコミュニティによる推定で、公式レートではありません。比較用であり、実際の価値とは異なる場合があります。", "Got it" to "了解", "Create custom currency" to "カスタム通貨を作成", "Edit currency" to "通貨を編集", "Name (e.g. gold coins)" to "名前（例：金貨）", "Set a value relative to a reference currency:" to "基準通貨に対する価値を設定：", "Enter how many units of the reference currency one unit of your currency is worth." to "自分の通貨1単位が基準通貨何単位に相当するか入力してください。", "unit" to "単位", "Choose reference currency" to "基準通貨を選択", "Create" to "作成", "Save changes" to "変更を保存", "Cancel" to "キャンセル", "Go to converter" to "換算画面へ", "Your custom currencies" to "カスタム通貨", "You have not created any custom currencies yet." to "カスタム通貨はまだありません。", "Edit" to "編集", "Delete" to "削除", "Delete currency?" to "通貨を削除しますか？", "Light" to "ライト", "Dark" to "ダーク", "System" to "システム設定", "Language" to "言語", "Theme" to "テーマ", "English" to "英語", "German" to "ドイツ語", "Spanish" to "スペイン語", "Japanese" to "日本語", "Chinese" to "中国語", "Search language" to "言語を検索", "About rates" to "レートについて", "Exchange rates are provided by Frankfurter." to "為替レートは Frankfurter が提供します。", "Fan currency values are estimates." to "架空通貨の値は推定です。", "Drag across the chart to inspect a rate" to "グラフをなぞってレートを確認", "All" to "すべて", "Anime" to "アニメ", "Movies & books" to "映画・書籍", "Series" to "ドラマ", "Video games" to "ゲーム", "Coral" to "コーラル", "Apricot" to "アプリコット", "Butter" to "バターイエロー", "Pistachio" to "ピスタチオ", "Mint" to "ミント", "Ice blue" to "アイスブルー", "Periwinkle" to "ペリウィンクル", "Lavender" to "ラベンダー", "Lilac" to "ライラック", "Rose" to "ローズ"
 )
 
+/** Translation sets for other supported languages; missing keys intentionally use English. */
 private val additionalTranslations = mapOf(
     "hi" to mapOf("Convert" to "मुद्रा बदलें", "Favorites" to "पसंदीदा", "Rate history" to "विनिमय दर इतिहास", "Camera converter" to "कैमरा कन्वर्टर", "Choose currencies" to "मुद्राएँ चुनें", "Custom currencies" to "कस्टम मुद्राएँ", "Fan currencies" to "फैन मुद्राएँ", "Settings" to "सेटिंग्स", "Amount" to "राशि", "Search currency" to "मुद्रा खोजें", "Day" to "दिन", "Week" to "सप्ताह", "Month" to "महीना", "Year" to "वर्ष", "All time" to "पूरी अवधि", "Theme" to "थीम", "Language" to "भाषा", "Light" to "हल्का", "Dark" to "गहरा", "System" to "सिस्टम", "Cancel" to "रद्द करें", "Create" to "बनाएँ", "Delete" to "हटाएँ", "Retry" to "फिर कोशिश करें", "Add" to "जोड़ें", "Edit" to "संपादित करें", "Search language" to "भाषा खोजें"),
     "ar" to mapOf("Convert" to "تحويل", "Favorites" to "المفضلة", "Rate history" to "سجل أسعار الصرف", "Camera converter" to "التحويل بالكاميرا", "Choose currencies" to "اختيار العملات", "Custom currencies" to "عملات مخصصة", "Fan currencies" to "عملات المعجبين", "Settings" to "الإعدادات", "Amount" to "المبلغ", "Search currency" to "البحث عن عملة", "Day" to "يوم", "Week" to "أسبوع", "Month" to "شهر", "Year" to "سنة", "All time" to "كل الفترات", "Theme" to "المظهر", "Language" to "اللغة", "Light" to "فاتح", "Dark" to "داكن", "System" to "النظام", "Cancel" to "إلغاء", "Create" to "إنشاء", "Delete" to "حذف", "Retry" to "إعادة المحاولة", "Add" to "إضافة", "Edit" to "تعديل", "Search language" to "البحث عن لغة"),
@@ -82,6 +88,7 @@ private val additionalTranslations = mapOf(
 
 // Short, frequently used labels for the newest locales; untranslated longer
 // explanations intentionally fall back to English instead of disappearing.
+/** Further language-specific strings composed from the app's stable English message keys. */
 private val moreLanguageTranslations = mapOf(
     "th" to mapOf("Convert" to "แปลงสกุลเงิน", "Favorites" to "รายการโปรด", "Rate history" to "ประวัติอัตราแลกเปลี่ยน", "Camera converter" to "แปลงค่าด้วยกล้อง", "Choose currencies" to "เลือกสกุลเงิน", "Custom currencies" to "สกุลเงินกำหนดเอง", "Fan currencies" to "สกุลเงินแฟน", "Settings" to "การตั้งค่า", "Amount" to "จำนวน", "Search currency" to "ค้นหาสกุลเงิน", "Day" to "วัน", "Week" to "สัปดาห์", "Month" to "เดือน", "Year" to "ปี", "All time" to "ทั้งหมด", "Theme" to "ธีม", "Language" to "ภาษา", "Light" to "สว่าง", "Dark" to "มืด", "System" to "ระบบ", "Cancel" to "ยกเลิก", "Create" to "สร้าง", "Delete" to "ลบ", "Retry" to "ลองอีกครั้ง", "Add" to "เพิ่ม", "Edit" to "แก้ไข", "Search language" to "ค้นหาภาษา"),
     "ko" to mapOf("Convert" to "환전", "Favorites" to "즐겨찾기", "Rate history" to "환율 기록", "Camera converter" to "카메라 환전", "Choose currencies" to "통화 선택", "Custom currencies" to "사용자 지정 통화", "Fan currencies" to "팬 통화", "Settings" to "설정", "Amount" to "금액", "Search currency" to "통화 검색", "Day" to "일", "Week" to "주", "Month" to "월", "Year" to "년", "All time" to "전체 기간", "Theme" to "테마", "Language" to "언어", "Light" to "라이트", "Dark" to "다크", "System" to "시스템", "Cancel" to "취소", "Create" to "만들기", "Delete" to "삭제", "Retry" to "다시 시도", "Add" to "추가", "Edit" to "수정", "Search language" to "언어 검색"),
@@ -92,7 +99,7 @@ private val moreLanguageTranslations = mapOf(
     "sw" to mapOf("Convert" to "Badili", "Favorites" to "Vipendwa", "Rate history" to "Historia ya viwango", "Camera converter" to "Kibadilishaji cha kamera", "Choose currencies" to "Chagua sarafu", "Custom currencies" to "Sarafu maalum", "Fan currencies" to "Sarafu za mashabiki", "Settings" to "Mipangilio", "Amount" to "Kiasi", "Search currency" to "Tafuta sarafu", "Day" to "Siku", "Week" to "Wiki", "Month" to "Mwezi", "Year" to "Mwaka", "All time" to "Muda wote", "Theme" to "Mandhari", "Language" to "Lugha", "Light" to "Mwanga", "Dark" to "Giza", "System" to "Mfumo", "Cancel" to "Ghairi", "Create" to "Unda", "Delete" to "Futa", "Retry" to "Jaribu tena", "Add" to "Ongeza", "Edit" to "Hariri", "Search language" to "Tafuta lugha")
 )
 
-/** Translation for the new quick-entry strip; other labels continue using the normal dictionaries. */
+/** Small translation overlay for the newer quick-amount feature across supported languages. */
 private val quickAmountTranslations = mapOf(
     "en" to "Quick amounts", "de" to "Schnellbeträge", "es" to "Importes rápidos", "zh" to "快捷金额", "ja" to "クイック金額",
     "hi" to "त्वरित राशियाँ", "ar" to "مبالغ سريعة", "fr" to "Montants rapides", "bn" to "দ্রুত পরিমাণ", "pt" to "Valores rápidos",
@@ -122,6 +129,7 @@ fun LocalizedText(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextStyle = LocalTextStyle.current
 ) {
+    // Preserve Material Text's layout contract while substituting only the text content.
     val language = LocalAppLanguage.current
     // Some strings include live values (for example a date or rate), so they are handled as prefixes below.
     // Exact translations are looked up by their English source text; unknown text safely stays readable in English.
@@ -182,5 +190,6 @@ fun LocalizedText(
 /** Makes the selected language available to all descendant [LocalizedText] calls. */
 @Composable
 fun ProvideAppLanguage(language: String, content: @Composable () -> Unit) {
+    // Re-providing this value triggers translated descendants when the user switches languages.
     CompositionLocalProvider(LocalAppLanguage provides language, content = content)
 }

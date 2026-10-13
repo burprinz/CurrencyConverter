@@ -36,8 +36,11 @@ import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.ui.MainViewModel
 import com.example.currencyconverter.ui.components.CurrencyFlag
 
-/** Select/deselect currencies and mark favorites. Two dropdown sections. */
-/** Lets users search, favorite, and select currencies before returning to the converter. */
+/**
+ * Lets users search, favorite, and select currencies before returning to the converter.
+ * Search matches both the display name and stable ID; while a query is present, both sections
+ * expand automatically so matching results cannot remain hidden in a collapsed group.
+ */
 @Composable
 fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -45,6 +48,7 @@ fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     var customOpen by rememberSaveable { mutableStateOf(false) }
 
     val q = query.trim()
+    // Search by both human-readable name and ISO/custom ID, independent of letter case.
     val matches: (Currency) -> Boolean = { c ->
         q.isEmpty() || c.name.contains(q, ignoreCase = true) || c.id.contains(q, ignoreCase = true)
     }
