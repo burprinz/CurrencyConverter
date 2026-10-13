@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import com.example.currencyconverter.ui.LocalizedText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -62,6 +63,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.view.MotionEvent
@@ -109,16 +112,16 @@ fun CameraConvertScreen(vm: MainViewModel) {
 
     val currencies = vm.realCurrencies + vm.customAndFunCurrencies
     val currencyIds = currencies.map { it.id }
-    var fromId by rememberSaveable { mutableStateOf("EUR") }
-    var toId by rememberSaveable { mutableStateOf("USD") }
+    val fromId = vm.cameraFromCurrency
+    val toId = vm.cameraToCurrency
     LaunchedEffect(currencyIds) {
         if (currencyIds.isNotEmpty()) {
-            if (fromId !in currencyIds) fromId = currencies.firstOrNull { it.id == "EUR" }?.id ?: currencyIds.first()
-            if (toId !in currencyIds || toId == fromId) {
-                toId = currencies.firstOrNull { it.id == "USD" && it.id != fromId }?.id
-                    ?: currencyIds.firstOrNull { it != fromId }
-                    ?: fromId
-            }
+            val validFrom = fromId.takeIf { it in currencyIds } ?: currencies.firstOrNull { it.id == "EUR" }?.id ?: currencyIds.first()
+            val validTo = toId.takeIf { it in currencyIds && it != validFrom }
+                ?: currencies.firstOrNull { it.id == "USD" && it.id != validFrom }?.id
+                ?: currencyIds.firstOrNull { it != validFrom }
+                ?: validFrom
+            if (validFrom != fromId || validTo != toId) vm.setCameraCurrencies(validFrom, validTo)
         }
     }
     val fromCurrency = currencies.firstOrNull { it.id == fromId }
@@ -147,15 +150,15 @@ fun CameraConvertScreen(vm: MainViewModel) {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            CurrencyPicker("From", currencies, fromId, { fromId = it }, Modifier.weight(1f))
+            CurrencyPicker("From", currencies, fromId, { vm.setCameraCurrencies(it, toId) }, Modifier.weight(1f))
             IconButton(
-                onClick = { val previousFrom = fromId; fromId = toId; toId = previousFrom },
-                modifier = Modifier.size(44.dp),
-                enabled = currencies.size > 1
+                onClick = { vm.setCameraCurrencies(toId, fromId) },
+                enabled = currencies.size > 1,
+                modifier = Modifier.size(44.dp).semantics { contentDescription = "Swap currencies" },
             ) {
                 Text("⇄", fontSize = 26.sp, color = MaterialTheme.colorScheme.primary)
             }
-            CurrencyPicker("To", currencies, toId, { toId = it }, Modifier.weight(1f))
+            CurrencyPicker("To", currencies, toId, { vm.setCameraCurrencies(fromId, it) }, Modifier.weight(1f))
         }
 
         Box(
@@ -282,12 +285,13 @@ private fun CurrencyPicker(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var query by rememberSaveable(label) { mutableStateOf("") }
     val selected = currencies.firstOrNull { it.id == selectedId }
 
     Column(modifier) {
         Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 4.dp, bottom = 2.dp))
         Box {
-            OutlinedButton(onClick = { expanded = true }, enabled = currencies.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = { query = ""; expanded = true }, enabled = currencies.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
                 if (selected != null) CurrencyFlag(selected)
                 Text(
                         selected?.let { "${it.name} (${it.id})" } ?: "Currency",
@@ -302,7 +306,19 @@ private fun CurrencyPicker(
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.heightIn(max = 360.dp)
             ) {
-                currencies.forEach { currency ->
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search currency") },
+                    singleLine = true,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+                val matches = currencies.filter { currency ->
+                    currency.id.contains(query, ignoreCase = true) ||
+                        currency.name.contains(query, ignoreCase = true) ||
+                        currency.subtitle.contains(query, ignoreCase = true)
+                }
+                matches.take(80).forEach { currency ->
                     DropdownMenuItem(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -317,9 +333,10 @@ private fun CurrencyPicker(
                                 }
                             }
                         },
-                        onClick = { onSelected(currency.id); expanded = false }
+                        onClick = { onSelected(currency.id); query = ""; expanded = false }
                     )
                 }
+                if (matches.isEmpty()) Text("No currencies found", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

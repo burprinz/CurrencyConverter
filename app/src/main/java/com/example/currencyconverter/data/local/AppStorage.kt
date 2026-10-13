@@ -46,6 +46,29 @@ class AppStorage(context: Context) {
         get() = prefs.getString("active_text", "1") ?: "1"
         set(value) { prefs.edit().putString("active_text", value).apply() }
 
+    /** Last source and target currencies selected in the camera converter. */
+    var cameraFromCurrency: String
+        get() = prefs.getString("camera_from_currency", "EUR") ?: "EUR"
+        set(value) { prefs.edit().putString("camera_from_currency", value).apply() }
+
+    var cameraToCurrency: String
+        get() = prefs.getString("camera_to_currency", "USD") ?: "USD"
+        set(value) { prefs.edit().putString("camera_to_currency", value).apply() }
+
+    /** Last source and target currencies selected in the rate history chart. */
+    var historyFromCurrency: String
+        get() = prefs.getString("history_from_currency", "EUR") ?: "EUR"
+        set(value) { prefs.edit().putString("history_from_currency", value).apply() }
+
+    var historyToCurrency: String
+        get() = prefs.getString("history_to_currency", "USD") ?: "USD"
+        set(value) { prefs.edit().putString("history_to_currency", value).apply() }
+
+    /** Last reference currency used while creating or editing a custom currency. */
+    var customReferenceCurrency: String
+        get() = prefs.getString("custom_reference_currency", "USD") ?: "USD"
+        set(value) { prefs.edit().putString("custom_reference_currency", value).apply() }
+
     var currencyColors: Map<String, Int>
         get() = try {
             // A malformed or old color record should not prevent the rest of the app from starting.

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -54,12 +55,13 @@ import com.example.currencyconverter.util.sanitizeAmountInput
 fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var name by rememberSaveable { mutableStateOf("") }
-    var refCode by rememberSaveable { mutableStateOf("USD") }
+    var refCode by rememberSaveable { mutableStateOf(vm.customReferenceCurrency) }
     var factorText by rememberSaveable { mutableStateOf("1") }
     var error by remember { mutableStateOf<String?>(null) }
     var successMessage by remember { mutableStateOf<String?>(null) }
     var showGoToConverter by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
+    var refQuery by rememberSaveable { mutableStateOf("") }
     var pendingDelete by remember { mutableStateOf<Currency?>(null) }
 
     val refOptions = vm.realCurrencies.map { it.id }.sorted().ifEmpty { listOf("USD") }
@@ -68,7 +70,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
     fun resetForm() {
         editingId = null
         name = ""
-        refCode = "USD"
+        refCode = vm.customReferenceCurrency
         factorText = "1"
         error = null
         successMessage = null
@@ -105,23 +107,45 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
                     Box {
-                        OutlinedButton(onClick = { menuOpen = true }) {
+                        OutlinedButton(onClick = { refQuery = ""; menuOpen = true }) {
                             vm.realCurrencies.firstOrNull { it.id == refCode }?.let { CurrencyFlag(it) }
                             Text(refCode)
                             Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Choose reference currency")
                         }
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            refOptions.forEach { code ->
+                        DropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                            modifier = Modifier.heightIn(max = 440.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = refQuery,
+                                onValueChange = { refQuery = it },
+                                label = { Text("Search currency") },
+                                singleLine = true,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                            val matchingCurrencies = vm.realCurrencies.filter { currency ->
+                                (currency.id.contains(refQuery, ignoreCase = true) || currency.name.contains(refQuery, ignoreCase = true)) &&
+                                    currency.id in refOptions
+                            }
+                            matchingCurrencies.take(80).forEach { currency ->
                                 DropdownMenuItem(
                                     text = {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            vm.realCurrencies.firstOrNull { it.id == code }?.let { CurrencyFlag(it) }
-                                            Text(code, modifier = Modifier.padding(start = 8.dp))
+                                            CurrencyFlag(currency)
+                                            Text("${currency.id} · ${currency.name}", modifier = Modifier.padding(start = 8.dp))
                                         }
                                     },
-                                    onClick = { refCode = code; menuOpen = false; successMessage = null }
+                                    onClick = {
+                                        refCode = currency.id
+                                        vm.rememberCustomReferenceCurrency(currency.id)
+                                        refQuery = ""
+                                        menuOpen = false
+                                        successMessage = null
+                                    }
                                 )
                             }
+                            if (matchingCurrencies.isEmpty()) Text("No currencies found", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }

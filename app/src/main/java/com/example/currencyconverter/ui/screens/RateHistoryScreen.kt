@@ -21,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,6 +47,8 @@ import androidx.compose.ui.graphics.nativeCanvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.remote.HistoricalRatePoint
 import com.example.currencyconverter.data.remote.HistoricalRatesApi
@@ -69,8 +72,8 @@ private enum class RatePeriod(val label: String) { DAY("Day"), WEEK("Week"), MON
 fun RateHistoryScreen(vm: MainViewModel) {
     val uriHandler = LocalUriHandler.current
     val currencies = vm.realCurrencies
-    var base by rememberSaveable { mutableStateOf("EUR") }
-    var quote by rememberSaveable { mutableStateOf("USD") }
+    val base = vm.historyFromCurrency
+    val quote = vm.historyToCurrency
     var period by rememberSaveable { mutableStateOf(RatePeriod.MONTH) }
     var points by remember { mutableStateOf<List<HistoricalRatePoint>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
@@ -85,6 +88,18 @@ fun RateHistoryScreen(vm: MainViewModel) {
         RatePeriod.ALL -> "1948-01-01"
     }
     val currencyCodes = currencies.map { it.id }
+
+    // Keep stored choices valid if the available rate list changes after an update.
+    LaunchedEffect(currencyCodes) {
+        if (currencyCodes.isNotEmpty()) {
+            val validBase = base.takeIf { it in currencyCodes } ?: currencyCodes.firstOrNull { it == "EUR" } ?: currencyCodes.first()
+            val validQuote = quote.takeIf { it in currencyCodes && it != validBase }
+                ?: currencyCodes.firstOrNull { it == "USD" && it != validBase }
+                ?: currencyCodes.firstOrNull { it != validBase }
+                ?: validBase
+            if (validBase != base || validQuote != quote) vm.setHistoryCurrencies(validBase, validQuote)
+        }
+    }
 
     // The effect key list makes each visible selection a new request and cancels the previous one.
     LaunchedEffect(base, quote, period, reload, currencyCodes) {
@@ -117,9 +132,15 @@ fun RateHistoryScreen(vm: MainViewModel) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Exchange rate history", style = MaterialTheme.typography.headlineSmall)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            SearchCurrencyPicker("From", currencies, base, { base = it }, Modifier.weight(1f))
-            Text("→", color = MaterialTheme.colorScheme.primary)
-            SearchCurrencyPicker("To", currencies, quote, { quote = it }, Modifier.weight(1f))
+            SearchCurrencyPicker("From", currencies, base, { vm.setHistoryCurrencies(it, quote) }, Modifier.weight(1f))
+            IconButton(
+                onClick = { vm.setHistoryCurrencies(quote, base) },
+                enabled = currencies.size > 1,
+                modifier = Modifier.semantics { contentDescription = "Swap currencies" }
+            ) {
+                Text("⇄", color = MaterialTheme.colorScheme.primary)
+            }
+            SearchCurrencyPicker("To", currencies, quote, { vm.setHistoryCurrencies(base, it) }, Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RatePeriod.values().forEach { option ->

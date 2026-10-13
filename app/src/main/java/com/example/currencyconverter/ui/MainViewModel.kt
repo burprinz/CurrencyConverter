@@ -90,6 +90,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var activeText by mutableStateOf(storage.activeText)
         private set
 
+    /** Remembered pair for the camera converter, independent from the graph's pair. */
+    var cameraFromCurrency by mutableStateOf(storage.cameraFromCurrency)
+        private set
+    var cameraToCurrency by mutableStateOf(storage.cameraToCurrency)
+        private set
+
+    /** Remembered pair for the rate history chart. */
+    var historyFromCurrency by mutableStateOf(storage.historyFromCurrency)
+        private set
+    var historyToCurrency by mutableStateOf(storage.historyToCurrency)
+        private set
+    var customReferenceCurrency by mutableStateOf(storage.customReferenceCurrency)
+        private set
+
+    /** Updates both camera selections together so a swap is persisted as one complete pair. */
+    fun setCameraCurrencies(from: String, to: String) {
+        cameraFromCurrency = from
+        cameraToCurrency = to
+        storage.cameraFromCurrency = from
+        storage.cameraToCurrency = to
+    }
+
+    /** Updates both graph selections together so reloads and app restarts keep the chosen pair. */
+    fun setHistoryCurrencies(from: String, to: String) {
+        historyFromCurrency = from
+        historyToCurrency = to
+        storage.historyFromCurrency = from
+        storage.historyToCurrency = to
+    }
+
+    /** Persists the reference unit most recently chosen in the custom-currency form. */
+    fun rememberCustomReferenceCurrency(currency: String) {
+        customReferenceCurrency = currency
+        storage.customReferenceCurrency = currency
+    }
+
     private var undoHistory by mutableStateOf<List<UndoSnapshot>>(emptyList())
         private set
     private var lastTypedChangeAt = 0L
