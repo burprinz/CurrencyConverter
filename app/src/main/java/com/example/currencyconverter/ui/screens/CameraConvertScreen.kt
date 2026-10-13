@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -63,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import android.view.MotionEvent
 import com.example.currencyconverter.data.model.Currency
 import com.example.currencyconverter.data.model.CurrencyKind
 import com.example.currencyconverter.domain.CurrencyConverter
@@ -123,9 +125,9 @@ fun CameraConvertScreen(vm: MainViewModel) {
     val toCurrency = currencies.firstOrNull { it.id == toId }
 
     // Live OCR is ignored while a still image is being analyzed to avoid competing results.
-    val onLiveText: (String) -> Unit = { text ->
+    val onLiveText: (com.google.mlkit.vision.text.Text) -> Unit = { result ->
         if (photoBitmap == null) {
-            val candidate = findLargestAmount(text)
+            val candidate = findLargestAmount(result.text, findElevatedCentCandidates(result))
             if (candidate != null) {
                 detectedAmount = candidate
                 lastDetectionMillis = SystemClock.elapsedRealtime()
@@ -238,7 +240,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
                             recognizer.process(InputImage.fromBitmap(frame, 0))
                                 .addOnSuccessListener { result ->
                                     if (photoRequestId == requestId && photoBitmap != null) {
-                                        detectedAmount = findLargestAmount(result.text)
+                                        detectedAmount = findLargestAmount(result.text, findElevatedCentCandidates(result))
                                         cameraMessage = if (detectedAmount == null) {
                                             "No number detected. Reposition the camera and try again."
                                         } else null
@@ -324,9 +326,49 @@ private fun CurrencyPicker(
 }
 
 /**
+ * Rebuilds prices whose cents ML Kit recognized as a separate, smaller, raised text element.
+ * Price labels often print these cents above the baseline without a visible dot or comma, so the
+ * horizontal gap and relative text-box size/height provide punctuation evidence missing in OCR.
+ */
+private fun findElevatedCentCandidates(result: com.google.mlkit.vision.text.Text): List<String> {
+    data class DigitBox(val digits: String, val left: Int, val top: Int, val right: Int, val bottom: Int) {
+        val height: Int get() = bottom - top
+    }
+
+    // Work within a visual text block, where neighboring boxes are more likely to belong together.
+    return result.textBlocks.flatMap { block ->
+        val boxes = block.lines.flatMap { line -> line.elements }.mapNotNull { element ->
+            val box = element.boundingBox ?: return@mapNotNull null
+            val digits = element.text.trim().filter(Char::isDigit)
+            // Keep only compact numeric elements; words and long product codes are not price parts.
+            if (digits.isEmpty() || digits.length > 3 || box.height() <= 0) return@mapNotNull null
+            DigitBox(digits, box.left, box.top, box.right, box.bottom)
+        }
+
+        boxes.flatMap { whole ->
+            if (whole.digits.length !in 1..3) {
+                emptyList()
+            } else {
+                boxes.mapNotNull { cents ->
+                    if (whole === cents || cents.digits.length != 2) return@mapNotNull null
+                    val horizontalGap = cents.left - whole.right
+                    val raisedBy = whole.bottom - cents.bottom
+                    val likelySuperscript = cents.height <= whole.height * 0.88f &&
+                        raisedBy >= whole.height * 0.08f &&
+                        horizontalGap >= -cents.height * 0.35f &&
+                        horizontalGap <= whole.height * 0.9f
+                    if (likelySuperscript) "${whole.digits}.${cents.digits}" else null
+                }
+            }
+        }
+    }.distinct()
+}
+
+/**
  * Displays the rear camera and forwards recognized text or camera errors to the screen.
  * Analysis is throttled to at most four frames per second and guarded by an atomic flag so only one
- * ML Kit task is in flight. Every ImageProxy is closed on completion or error to release camera buffers.
+ * ML Kit task is in flight. Tapping the preview asks CameraX to focus at that point, which helps
+ * resolve faint shelf-label punctuation. Every ImageProxy is closed on completion or error.
  */
 @Composable
 @OptIn(ExperimentalGetImage::class)
@@ -334,7 +376,7 @@ private fun CameraPreview(
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     recognizer: com.google.mlkit.vision.text.TextRecognizer,
     photoMode: Boolean,
-    onTextRecognized: (String) -> Unit,
+    onTextRecognized: (com.google.mlkit.vision.text.Text) -> Unit,
     onPreviewReady: (PreviewView) -> Unit,
     onCameraError: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -346,6 +388,7 @@ private fun CameraPreview(
     val latestErrorCallback = rememberUpdatedState(onCameraError)
     val processing = remember { AtomicBoolean(false) }
     val lastFrameAt = remember { AtomicLong(0L) }
+    var activeCamera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
     val analyzer = remember(recognizer) {
         ImageAnalysis.Analyzer { imageProxy ->
             val now = SystemClock.elapsedRealtime()
@@ -361,7 +404,7 @@ private fun CameraPreview(
                 } else {
                     try {
                         recognizer.process(InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees))
-                            .addOnSuccessListener { result -> latestTextCallback.value(result.text) }
+                            .addOnSuccessListener { result -> latestTextCallback.value(result) }
                             .addOnFailureListener { latestErrorCallback.value("Live text recognition is currently unavailable.") }
                             .addOnCompleteListener {
                                 imageProxy.close()
@@ -389,6 +432,17 @@ private fun CameraPreview(
             if (previewView !== view) {
                 previewView = view
                 onPreviewReady(view)
+            }
+            // Allow the user to sharpen focus directly on a small price label before reading it.
+            view.setOnTouchListener { touchedView, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    val point = view.meteringPointFactory.createPoint(event.x, event.y)
+                    val focusAction = FocusMeteringAction.Builder(point)
+                        .setAutoCancelDuration(3, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                    activeCamera?.cameraControl?.startFocusAndMetering(focusAction)
+                }
+                false
             }
         },
         modifier = modifier
@@ -422,7 +476,7 @@ private fun CameraPreview(
                             .build()
                         analysis.setAnalyzer(executor, analyzer)
                         provider.unbindAll()
-                        provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
+                        activeCamera = provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
                     } catch (e: Exception) {
                         latestErrorCallback.value("The rear camera could not be started.")
                     }
@@ -431,6 +485,7 @@ private fun CameraPreview(
         }
         onDispose {
             active.set(false)
+            activeCamera = null
             cameraProvider?.unbindAll()
         }
     }
