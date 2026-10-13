@@ -39,7 +39,7 @@ import com.example.currencyconverter.ui.MainViewModel
 fun UnlockScreen(vm: MainViewModel) {
     var showInfo by rememberSaveable { mutableStateOf(false) }
     var selectedCategory by rememberSaveable { mutableStateOf("All") }
-    val categories = listOf("All", "Anime", "Movies & books", "Series", "Video games")
+    val categories = listOf("All", "Anime", "Movies & books", "Series", "Video games", "Other")
     val filteredCurrencies = if (selectedCategory == "All") FunCurrencies.all else FunCurrencies.all.filter { it.category == selectedCategory }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {

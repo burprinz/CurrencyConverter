@@ -56,13 +56,29 @@ object FunCurrencies {
         // Approximation from a US Marketplace pack; store bundles and regional prices vary.
         Currency("fun_minecoin", "Minecoin", CurrencyKind.FUN, "USD", 1.99 / 320.0, "Minecraft · US store estimate: 320 ≈ 1.99 USD", "Video games"),
 
-        // DevEx cash-out estimate for eligible Earned Robux only; retail purchase value differs.
-        Currency("fun_robux", "Robux", CurrencyKind.FUN, "USD", 0.0038, "Roblox · DevEx estimate per eligible Earned Robux; not the purchase price", "Video games"),
+        // Purchase estimate based on the US Xbox bundle: 400 Robux for $4.99.
+        // Roblox prices and included amounts can vary by country and purchase platform.
+        Currency("fun_robux", "Robux", CurrencyKind.FUN, "USD", 4.99 / 400.0, "Roblox · US purchase estimate: 400 ≈ 4.99 USD; region/platform prices vary", "Video games"),
 
         // Approximation from the US 800 V-Bucks pack; pack sizes and regional prices vary.
         Currency("fun_vbucks", "V-Bucks", CurrencyKind.FUN, "USD", 8.99 / 800.0, "Fortnite · US store estimate: 800 ≈ 8.99 USD; regional prices vary", "Video games"),
 
         // Illustrative North American bundle estimate; RP prices vary by region and bundle.
-        Currency("fun_riot_points", "Riot Points", CurrencyKind.FUN, "USD", 10.0 / 1380.0, "League of Legends · illustrative US estimate: 1,380 ≈ 10 USD; prices vary", "Video games")
+        Currency("fun_riot_points", "Riot Points", CurrencyKind.FUN, "USD", 10.0 / 1380.0, "League of Legends · illustrative US estimate: 1,380 ≈ 10 USD; prices vary", "Video games"),
+
+        // Official HoYoverse top-up center lists 60 Genesis Crystals for $0.99 in the US.
+        Currency("fun_genesis_crystal", "Genesis Crystal", CurrencyKind.FUN, "USD", 0.99 / 60.0, "Genshin Impact · US store estimate: 60 ≈ 0.99 USD; bonuses and regions vary", "Video games"),
+
+        // Official US PlayStation listing: 1,000 Apex Coins for $9.99.
+        Currency("fun_apex_coin", "Apex Coin", CurrencyKind.FUN, "USD", 9.99 / 1000.0, "Apex Legends · US store estimate: 1,000 ≈ 9.99 USD; regional prices vary", "Video games"),
+
+        // Official US Steam item store: 500 Overwatch Coins for $4.99.
+        Currency("fun_overwatch_coin", "Overwatch Coin", CurrencyKind.FUN, "USD", 4.99 / 500.0, "Overwatch · US Steam store estimate: 500 ≈ 4.99 USD; regional prices vary", "Video games"),
+
+        // Steam awards 100 points per US dollar spent; this is spend equivalence, not cash value.
+        Currency("fun_steam_points", "Steam Points", CurrencyKind.FUN, "USD", 1.0 / 100.0, "Steam · 100 points per 1 USD spent; points have no cash redemption value", "Other"),
+
+        // US Starbucks rewards: 100 Stars can redeem eligible items up to $6; not cash value.
+        Currency("fun_starbucks_stars", "Starbucks Stars", CurrencyKind.FUN, "USD", 6.0 / 100.0, "Starbucks US · 100 Stars redeem eligible items up to 6 USD; not cash", "Other")
     )
 }
