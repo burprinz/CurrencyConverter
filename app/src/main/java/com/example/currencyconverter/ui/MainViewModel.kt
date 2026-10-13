@@ -22,6 +22,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.math.RoundingMode
 
+/**
+ * Shared screen state and app actions live here so Compose screens stay mostly presentational.
+ * [AppStorage] persists user choices, while [CurrencyRepository] loads/caches exchange rates.
+ */
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private data class UndoSnapshot(
@@ -66,7 +70,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun changeLanguage(code: String) {
-        if (code !in setOf("en", "de", "es", "zh", "ja", "hi", "ar", "fr", "bn", "pt", "ru", "id", "ur", "tr", "vi")) return
+        // Keep this allow-list aligned with the language options and translation tables in SettingsScreen/Localization.
+        if (code !in setOf("en", "de", "es", "zh", "ja", "hi", "ar", "fr", "bn", "pt", "ru", "id", "ur", "tr", "vi", "th", "ko", "it", "nl", "pl", "ms", "sw")) return
         language = code
         storage.language = code
     }

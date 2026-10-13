@@ -80,6 +80,18 @@ private val additionalTranslations = mapOf(
     "vi" to mapOf("Convert" to "Chuyển đổi", "Favorites" to "Yêu thích", "Rate history" to "Lịch sử tỷ giá", "Camera converter" to "Chuyển đổi bằng camera", "Choose currencies" to "Chọn tiền tệ", "Custom currencies" to "Tiền tệ tùy chỉnh", "Fan currencies" to "Tiền tệ hư cấu", "Settings" to "Cài đặt", "Amount" to "Số tiền", "Search currency" to "Tìm tiền tệ", "Day" to "Ngày", "Week" to "Tuần", "Month" to "Tháng", "Year" to "Năm", "All time" to "Toàn bộ thời gian", "Theme" to "Giao diện", "Language" to "Ngôn ngữ", "Light" to "Sáng", "Dark" to "Tối", "System" to "Hệ thống", "Cancel" to "Hủy", "Create" to "Tạo", "Delete" to "Xóa", "Retry" to "Thử lại", "Add" to "Thêm", "Edit" to "Chỉnh sửa", "Search language" to "Tìm ngôn ngữ")
 )
 
+// Short, frequently used labels for the newest locales; untranslated longer
+// explanations intentionally fall back to English instead of disappearing.
+private val moreLanguageTranslations = mapOf(
+    "th" to mapOf("Convert" to "แปลงสกุลเงิน", "Favorites" to "รายการโปรด", "Rate history" to "ประวัติอัตราแลกเปลี่ยน", "Camera converter" to "แปลงค่าด้วยกล้อง", "Choose currencies" to "เลือกสกุลเงิน", "Custom currencies" to "สกุลเงินกำหนดเอง", "Fan currencies" to "สกุลเงินแฟน", "Settings" to "การตั้งค่า", "Amount" to "จำนวน", "Search currency" to "ค้นหาสกุลเงิน", "Day" to "วัน", "Week" to "สัปดาห์", "Month" to "เดือน", "Year" to "ปี", "All time" to "ทั้งหมด", "Theme" to "ธีม", "Language" to "ภาษา", "Light" to "สว่าง", "Dark" to "มืด", "System" to "ระบบ", "Cancel" to "ยกเลิก", "Create" to "สร้าง", "Delete" to "ลบ", "Retry" to "ลองอีกครั้ง", "Add" to "เพิ่ม", "Edit" to "แก้ไข", "Search language" to "ค้นหาภาษา"),
+    "ko" to mapOf("Convert" to "환전", "Favorites" to "즐겨찾기", "Rate history" to "환율 기록", "Camera converter" to "카메라 환전", "Choose currencies" to "통화 선택", "Custom currencies" to "사용자 지정 통화", "Fan currencies" to "팬 통화", "Settings" to "설정", "Amount" to "금액", "Search currency" to "통화 검색", "Day" to "일", "Week" to "주", "Month" to "월", "Year" to "년", "All time" to "전체 기간", "Theme" to "테마", "Language" to "언어", "Light" to "라이트", "Dark" to "다크", "System" to "시스템", "Cancel" to "취소", "Create" to "만들기", "Delete" to "삭제", "Retry" to "다시 시도", "Add" to "추가", "Edit" to "수정", "Search language" to "언어 검색"),
+    "it" to mapOf("Convert" to "Converti", "Favorites" to "Preferiti", "Rate history" to "Storico dei tassi", "Camera converter" to "Convertitore con fotocamera", "Choose currencies" to "Scegli valute", "Custom currencies" to "Valute personalizzate", "Fan currencies" to "Valute dei fan", "Settings" to "Impostazioni", "Amount" to "Importo", "Search currency" to "Cerca valuta", "Day" to "Giorno", "Week" to "Settimana", "Month" to "Mese", "Year" to "Anno", "All time" to "Sempre", "Theme" to "Tema", "Language" to "Lingua", "Light" to "Chiaro", "Dark" to "Scuro", "System" to "Sistema", "Cancel" to "Annulla", "Create" to "Crea", "Delete" to "Elimina", "Retry" to "Riprova", "Add" to "Aggiungi", "Edit" to "Modifica", "Search language" to "Cerca lingua"),
+    "nl" to mapOf("Convert" to "Omrekenen", "Favorites" to "Favorieten", "Rate history" to "Koersgeschiedenis", "Camera converter" to "Camera-omzetter", "Choose currencies" to "Valuta kiezen", "Custom currencies" to "Aangepaste valuta", "Fan currencies" to "Fanvaluta", "Settings" to "Instellingen", "Amount" to "Bedrag", "Search currency" to "Valuta zoeken", "Day" to "Dag", "Week" to "Week", "Month" to "Maand", "Year" to "Jaar", "All time" to "Alles", "Theme" to "Thema", "Language" to "Taal", "Light" to "Licht", "Dark" to "Donker", "System" to "Systeem", "Cancel" to "Annuleren", "Create" to "Aanmaken", "Delete" to "Verwijderen", "Retry" to "Opnieuw proberen", "Add" to "Toevoegen", "Edit" to "Bewerken", "Search language" to "Taal zoeken"),
+    "pl" to mapOf("Convert" to "Przelicz", "Favorites" to "Ulubione", "Rate history" to "Historia kursów", "Camera converter" to "Przelicznik z aparatem", "Choose currencies" to "Wybierz waluty", "Custom currencies" to "Własne waluty", "Fan currencies" to "Waluty fanowskie", "Settings" to "Ustawienia", "Amount" to "Kwota", "Search currency" to "Szukaj waluty", "Day" to "Dzień", "Week" to "Tydzień", "Month" to "Miesiąc", "Year" to "Rok", "All time" to "Cały okres", "Theme" to "Motyw", "Language" to "Język", "Light" to "Jasny", "Dark" to "Ciemny", "System" to "Systemowy", "Cancel" to "Anuluj", "Create" to "Utwórz", "Delete" to "Usuń", "Retry" to "Ponów", "Add" to "Dodaj", "Edit" to "Edytuj", "Search language" to "Szukaj języka"),
+    "ms" to mapOf("Convert" to "Tukar", "Favorites" to "Kegemaran", "Rate history" to "Sejarah kadar", "Camera converter" to "Penukar kamera", "Choose currencies" to "Pilih mata wang", "Custom currencies" to "Mata wang tersuai", "Fan currencies" to "Mata wang peminat", "Settings" to "Tetapan", "Amount" to "Jumlah", "Search currency" to "Cari mata wang", "Day" to "Hari", "Week" to "Minggu", "Month" to "Bulan", "Year" to "Tahun", "All time" to "Sepanjang masa", "Theme" to "Tema", "Language" to "Bahasa", "Light" to "Cerah", "Dark" to "Gelap", "System" to "Sistem", "Cancel" to "Batal", "Create" to "Cipta", "Delete" to "Padam", "Retry" to "Cuba lagi", "Add" to "Tambah", "Edit" to "Edit", "Search language" to "Cari bahasa"),
+    "sw" to mapOf("Convert" to "Badili", "Favorites" to "Vipendwa", "Rate history" to "Historia ya viwango", "Camera converter" to "Kibadilishaji cha kamera", "Choose currencies" to "Chagua sarafu", "Custom currencies" to "Sarafu maalum", "Fan currencies" to "Sarafu za mashabiki", "Settings" to "Mipangilio", "Amount" to "Kiasi", "Search currency" to "Tafuta sarafu", "Day" to "Siku", "Week" to "Wiki", "Month" to "Mwezi", "Year" to "Mwaka", "All time" to "Muda wote", "Theme" to "Mandhari", "Language" to "Lugha", "Light" to "Mwanga", "Dark" to "Giza", "System" to "Mfumo", "Cancel" to "Ghairi", "Create" to "Unda", "Delete" to "Futa", "Retry" to "Jaribu tena", "Add" to "Ongeza", "Edit" to "Hariri", "Search language" to "Tafuta lugha")
+)
+
 @Composable
 fun LocalizedText(
     text: String,
@@ -101,7 +113,18 @@ fun LocalizedText(
     style: TextStyle = LocalTextStyle.current
 ) {
     val language = LocalAppLanguage.current
+    // Some strings include live values (for example a date or rate), so they are handled as prefixes below.
+    // Exact translations are looked up by their English source text; unknown text safely stays readable in English.
     val translated = when {
+        text == "Other" && language == "de" -> "Sonstiges"
+        text == "Other" && language == "es" -> "Otros"
+        text == "Other" && language == "fr" -> "Autre"
+        text == "Other" && language == "pt" -> "Outro"
+        text == "Other" && language == "it" -> "Altro"
+        text == "Other" && language == "nl" -> "Overig"
+        text == "Other" && language == "pl" -> "Inne"
+        text == "Other" && language == "th" -> "อื่น ๆ"
+        text == "Other" && language == "ko" -> "기타"
         language == "de" && text.startsWith("Currencies (") -> text.replace("Currencies (", "Währungen (")
         language == "de" && text.startsWith("Custom and fan currencies (") -> text.replace("Custom and fan currencies (", "Eigene Währungen und Fan-Währungen (")
         language == "es" && text.startsWith("Currencies (") -> text.replace("Currencies (", "Monedas (")
@@ -126,7 +149,8 @@ fun LocalizedText(
         language == "es" && text.contains(" decrease over ") -> text.replace(" decrease over ", " descenso en ").replace("day", "día").replace("week", "semana").replace("month", "mes").replace("year", "año")
         (language == "zh" || language == "ja") && text.contains(" increase over ") -> text.replace(" increase over ", if (language == "zh") "上涨（" else "上昇（").replace("day", "日").replace("week", if (language == "zh") "周" else "週間").replace("month", if (language == "zh") "个月" else "か月").replace("year", "年") + if (language == "zh") "）" else "）"
         (language == "zh" || language == "ja") && text.contains(" decrease over ") -> text.replace(" decrease over ", if (language == "zh") "下跌（" else "下落（").replace("day", "日").replace("week", if (language == "zh") "周" else "週間").replace("month", if (language == "zh") "个月" else "か月").replace("year", "年") + "）"
-        else -> additionalTranslations[language]?.get(text)
+        else -> moreLanguageTranslations[language]?.get(text)
+            ?: additionalTranslations[language]?.get(text)
             ?: when (language) {
                 "zh" -> chinese[text]
                 "ja" -> japanese[text]

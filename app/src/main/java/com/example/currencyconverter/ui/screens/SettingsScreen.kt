@@ -3,9 +3,12 @@ package com.example.currencyconverter.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.ui.MainViewModel
 
+/** One selectable locale, its representative flag, and alternate names accepted by search. */
 private data class LanguageOption(val code: String, val nativeName: String, val flag: String, val searchNames: List<String>)
 
 @Composable
@@ -42,13 +46,25 @@ fun SettingsScreen(vm: MainViewModel) {
         LanguageOption("id", "Bahasa Indonesia", "🇮🇩", listOf("Indonesian", "Bahasa Indonesia", "Indonesisch")),
         LanguageOption("ur", "اردو", "🇵🇰", listOf("Urdu", "اردو")),
         LanguageOption("tr", "Türkçe", "🇹🇷", listOf("Turkish", "Türkçe", "Türkisch", "Turco")),
-        LanguageOption("vi", "Tiếng Việt", "🇻🇳", listOf("Vietnamese", "Tiếng Việt", "Vietnamesisch", "Vietnamita"))
+        LanguageOption("vi", "Tiếng Việt", "🇻🇳", listOf("Vietnamese", "Tiếng Việt", "Vietnamesisch", "Vietnamita")),
+        LanguageOption("th", "ไทย", "🇹🇭", listOf("Thai", "ไทย", "Thailändisch")),
+        LanguageOption("ko", "한국어", "🇰🇷", listOf("Korean", "한국어", "Koreanisch")),
+        LanguageOption("it", "Italiano", "🇮🇹", listOf("Italian", "Italiano", "Italienisch")),
+        LanguageOption("nl", "Nederlands", "🇳🇱", listOf("Dutch", "Nederlands", "Holländisch", "Niederländisch")),
+        LanguageOption("pl", "Polski", "🇵🇱", listOf("Polish", "Polski", "Polnisch")),
+        LanguageOption("ms", "Bahasa Melayu", "🇲🇾", listOf("Malay", "Bahasa Melayu", "Malaiisch")),
+        LanguageOption("sw", "Kiswahili", "🇰🇪", listOf("Swahili", "Kiswahili", "Suaheli"))
     )
+    // Search accepts the localized name, the language's own name, and common translations of its name.
     val visibleLanguages = languages.filter { option ->
         languageQuery.isBlank() || option.searchNames.any { it.contains(languageQuery.trim(), ignoreCase = true) } ||
             option.nativeName.contains(languageQuery.trim(), ignoreCase = true)
     }
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    // A vertical scroll container is needed because the language list is taller than many screens.
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
         Text("Theme", style = MaterialTheme.typography.titleLarge)
         listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
             Row(Modifier.fillMaxWidth().clickable { vm.changeThemeMode(value) }, verticalAlignment = Alignment.CenterVertically) {
