@@ -92,8 +92,10 @@ private fun CurrencyAppContent(vm: MainViewModel) {
                 TopAppBar(
                     title = { Text(screen.title) },
                     actions = {
+                        if (screen in setOf(Screen.LIST, Screen.FAVORITES, Screen.SELECT, Screen.ADD_NEW, Screen.UNLOCK)) {
                         TextButton(onClick = { vm.undoLastChange() }, enabled = vm.canUndo) {
                             Text("Undo")
+                        }
                         }
                     },
                     navigationIcon = {

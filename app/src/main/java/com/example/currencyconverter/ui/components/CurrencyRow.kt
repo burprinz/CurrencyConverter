@@ -55,9 +55,16 @@ fun CurrencyRow(
     onColorSelected: (Int?) -> Unit = {}
 ) {
     var paletteOpen by remember { mutableStateOf(false) }
-    val palette = listOf(0xFFE57373, 0xFFFFA726, 0xFFFFD54F, 0xFF9CCC65, 0xFF4DB6AC, 0xFF4FC3F7, 0xFF64B5F6, 0xFF7986CB, 0xFFBA68C8, 0xFFF06292).map { Color(it) }
+    data class PaletteColor(val name: String, val color: Color)
+    val palette = listOf(
+        PaletteColor("Coral", Color(0xFFE57373)), PaletteColor("Apricot", Color(0xFFFFA726)),
+        PaletteColor("Butter", Color(0xFFFFD54F)), PaletteColor("Pistachio", Color(0xFF9CCC65)),
+        PaletteColor("Mint", Color(0xFF4DB6AC)), PaletteColor("Ice blue", Color(0xFF4FC3F7)),
+        PaletteColor("Periwinkle", Color(0xFF64B5F6)), PaletteColor("Lavender", Color(0xFF7986CB)),
+        PaletteColor("Lilac", Color(0xFFBA68C8)), PaletteColor("Rose", Color(0xFFF06292))
+    )
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val accent = selectedColor?.let(palette::getOrNull)
+    val accent = selectedColor?.let(palette::getOrNull)?.color
     val cardBackground = accent?.let { if (dark) Color(red = it.red * .20f, green = it.green * .20f, blue = it.blue * .20f) else it.copy(alpha = .14f) }
     val cardBorder = accent?.let { if (dark) it.copy(red = it.red * .75f, green = it.green * .75f, blue = it.blue * .75f) else it.copy(red = it.red * .72f, green = it.green * .72f, blue = it.blue * .72f) }
     val roundingDigits = if (currency.kind == CurrencyKind.REAL) {
@@ -79,12 +86,14 @@ fun CurrencyRow(
                 IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.Close, contentDescription = "Remove from list")
                 }
-                androidx.compose.material3.TextButton(onClick = { paletteOpen = true }, modifier = Modifier.size(40.dp)) { Text("●") }
+                androidx.compose.material3.TextButton(onClick = { paletteOpen = true }, modifier = Modifier.size(40.dp)) {
+                    Text("●", color = accent ?: MaterialTheme.colorScheme.outline)
+                }
                 DropdownMenu(expanded = paletteOpen, onDismissRequest = { paletteOpen = false }) {
                     DropdownMenuItem(text = { Text("Default") }, onClick = { onColorSelected(null); paletteOpen = false })
                     palette.forEachIndexed { index, swatch ->
                         DropdownMenuItem(
-                            text = { Row(verticalAlignment = Alignment.CenterVertically) { androidx.compose.foundation.layout.Box(Modifier.size(22.dp).background(swatch, CircleShape)); Text("Pastel ${index + 1}", Modifier.padding(start = 10.dp)) } },
+                            text = { Row(verticalAlignment = Alignment.CenterVertically) { androidx.compose.foundation.layout.Box(Modifier.size(22.dp).background(swatch.color, CircleShape)); Text(swatch.name, Modifier.padding(start = 10.dp)) } },
                             onClick = { onColorSelected(index); paletteOpen = false }
                         )
                     }

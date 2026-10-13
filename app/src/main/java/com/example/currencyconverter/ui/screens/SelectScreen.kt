@@ -60,7 +60,7 @@ fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("1. Choose your currencies", style = MaterialTheme.typography.titleMedium)
+            Text("Choose currencies", style = MaterialTheme.typography.titleMedium)
             Text("Check each currency you want to compare. When you're done, tap ‘Done – convert’. ", style = MaterialTheme.typography.bodyMedium)
             Text("Tap the star to mark a favorite.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
             Button(onClick = onDone, modifier = Modifier.padding(top = 12.dp)) {
