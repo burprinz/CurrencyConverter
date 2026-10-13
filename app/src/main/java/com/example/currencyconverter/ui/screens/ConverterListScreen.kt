@@ -9,11 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,8 +26,8 @@ import com.example.currencyconverter.ui.components.CurrencyRow
 
 /**
  * Shows all selected currencies, or only favorites when [favoritesOnly] is enabled.
- * The empty state explains the next action; otherwise quick-amount chips update the active source
- * row and each [CurrencyRow] delegates editing, rounding, color, and removal actions to the view model.
+ * The empty state explains the next action; otherwise each [CurrencyRow] owns its quick amounts and
+ * delegates editing, rounding, color, and removal actions to the view model.
  */
 @Composable
 fun ConverterListScreen(
@@ -68,26 +65,10 @@ fun ConverterListScreen(
     }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Keep a stable source for quick amounts: use the active currency when it is visible,
-        // otherwise use the first visible currency (for example in a favorites-only view).
-        val quickAmountSource = visible.firstOrNull { it.id == vm.activeId } ?: visible.first()
         item {
             Column(Modifier.padding(start = 4.dp, bottom = 8.dp)) {
                 Text(if (favoritesOnly) "Your favorites" else "Your currencies", style = MaterialTheme.typography.headlineSmall)
                 Text("Tap an amount to convert all values.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Quick amounts", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 14.dp))
-                Text(quickAmountSource.id, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                androidx.compose.foundation.layout.Row(
-                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(1, 5, 10, 20, 50, 100).forEach { amount ->
-                        AssistChip(
-                            onClick = { vm.setQuickAmount(quickAmountSource, amount) },
-                            label = { Text(amount.toString()) }
-                        )
-                    }
-                }
             }
         }
         items(visible, key = { it.id }) { c ->
@@ -99,6 +80,7 @@ fun ConverterListScreen(
                 onRoundDown = { vm.roundDown(c) },
                 onRoundUp = { vm.roundUp(c) },
                 onSetToOne = { vm.setToOne(c) },
+                onQuickAmount = { vm.setQuickAmount(c, it) },
                 selectedColor = vm.currencyColors[c.id],
                 onColorSelected = { vm.setCurrencyColor(c.id, it) }
             )

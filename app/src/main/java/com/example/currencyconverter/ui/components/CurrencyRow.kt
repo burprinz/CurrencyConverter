@@ -6,8 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -44,8 +47,8 @@ import com.example.currencyconverter.data.model.CurrencyKind
 /**
  * Compact currency card: identity and color controls sit above the editable amount row.
  * The amount is the only editable conversion input; callbacks delegate rounding, removal, and
- * propagation to the view model. Palette indices are persisted per currency so selection changes
- * do not lose the user's color choice.
+ * propagation to the view model. Per-card quick presets set this row's currency directly, while
+ * palette indices are persisted per currency so selection changes do not lose the user's color.
  */
 @Composable
 fun CurrencyRow(
@@ -56,6 +59,7 @@ fun CurrencyRow(
     onRoundDown: () -> Unit,
     onRoundUp: () -> Unit,
     onSetToOne: () -> Unit,
+    onQuickAmount: (Int) -> Unit,
     selectedColor: Int? = null,
     onColorSelected: (Int?) -> Unit = {}
 ) {
@@ -130,6 +134,25 @@ fun CurrencyRow(
                     modifier = Modifier.size(40.dp).semantics { contentDescription = "Set amount to one" }
                 ) {
                     Text("1", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            // Keeping presets inside each card makes their currency context visible at the point of use.
+            Row(
+                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Quick amounts", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(" · ${currency.id}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf(1, 5, 10, 20, 50, 100).forEach { amount ->
+                    AssistChip(
+                        onClick = { onQuickAmount(amount) },
+                        label = { Text(amount.toString()) }
+                    )
                 }
             }
         }
