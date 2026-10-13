@@ -40,6 +40,17 @@ class AppStorage(context: Context) {
         get() = prefs.getString("active_text", "1") ?: "1"
         set(value) { prefs.edit().putString("active_text", value).apply() }
 
+    var currencyColors: Map<String, Int>
+        get() = try {
+            val json = JSONObject(prefs.getString("currency_colors", "{}") ?: "{}")
+            buildMap { val keys = json.keys(); while (keys.hasNext()) { val key = keys.next(); put(key, json.getInt(key)) } }
+        } catch (_: Exception) { emptyMap() }
+        set(value) {
+            val json = JSONObject()
+            value.forEach { (id, color) -> json.put(id, color) }
+            prefs.edit().putString("currency_colors", json.toString()).apply()
+        }
+
     var customCurrencies: List<Currency>
         get() = try {
             val arr = JSONArray(prefs.getString("custom", "[]"))

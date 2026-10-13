@@ -52,6 +52,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var customCurrencies by mutableStateOf(storage.customCurrencies)
         private set
+    var currencyColors by mutableStateOf(storage.currencyColors)
+        private set
+
+    fun setCurrencyColor(id: String, paletteIndex: Int?) {
+        currencyColors = if (paletteIndex == null) currencyColors - id else currencyColors + (id to paletteIndex)
+        storage.currencyColors = currencyColors
+    }
 
     /** The currency the user typed into last; all other values are derived from it. */
     var activeId by mutableStateOf(storage.activeId)

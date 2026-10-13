@@ -73,7 +73,9 @@ fun ConverterListScreen(
                 onValueChange = { vm.onValueChange(c.id, it) },
                 onRoundDown = { vm.roundDown(c) },
                 onRoundUp = { vm.roundUp(c) },
-                onSetToOne = { vm.setToOne(c) }
+                onSetToOne = { vm.setToOne(c) },
+                selectedColor = vm.currencyColors[c.id],
+                onColorSelected = { vm.setCurrencyColor(c.id, it) }
             )
         }
     }
