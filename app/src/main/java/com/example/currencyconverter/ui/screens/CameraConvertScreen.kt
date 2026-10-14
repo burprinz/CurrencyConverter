@@ -73,7 +73,9 @@ import com.example.currencyconverter.data.model.CurrencyKind
 import com.example.currencyconverter.domain.CurrencyConverter
 import com.example.currencyconverter.ui.MainViewModel
 import com.example.currencyconverter.ui.components.CurrencyFlag
+import com.example.currencyconverter.util.AmountStabilizer
 import com.example.currencyconverter.util.DetectedAmount
+import com.example.currencyconverter.util.ReconstructedAmount
 import com.example.currencyconverter.util.findLargestAmount
 import com.example.currencyconverter.util.formatAmount
 import com.google.mlkit.vision.common.InputImage
@@ -101,7 +103,9 @@ fun CameraConvertScreen(vm: MainViewModel) {
     var cameraMessage by remember { mutableStateOf<String?>(null) }
     var lastDetectionMillis by remember { mutableLongStateOf(0L) }
     var photoRequestId by remember { mutableIntStateOf(0) }
+    val amountStabilizer = remember { AmountStabilizer() }
 
+    // Permission state is initialized from Android and refreshed by the permission result callback.
     var cameraPermissionGranted by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
@@ -115,6 +119,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
     val fromId = vm.cameraFromCurrency
     val toId = vm.cameraToCurrency
     LaunchedEffect(currencyIds) {
+        // Currency lists can change after rates load; repair stale selections while preserving valid choices.
         if (currencyIds.isNotEmpty()) {
             val validFrom = fromId.takeIf { it in currencyIds } ?: currencies.firstOrNull { it.id == "EUR" }?.id ?: currencyIds.first()
             val validTo = toId.takeIf { it in currencyIds && it != validFrom }
@@ -127,12 +132,13 @@ fun CameraConvertScreen(vm: MainViewModel) {
     val fromCurrency = currencies.firstOrNull { it.id == fromId }
     val toCurrency = currencies.firstOrNull { it.id == toId }
 
-    // Live OCR is ignored while a still image is being analyzed to avoid competing results.
+    // Live OCR is ignored during still-image analysis; stabilization prevents frame-to-frame flicker.
     val onLiveText: (com.google.mlkit.vision.text.Text) -> Unit = { result ->
         if (photoBitmap == null) {
             val candidate = findLargestAmount(result.text, findElevatedCentCandidates(result))
             if (candidate != null) {
-                detectedAmount = candidate
+                // Keep the last stable value visible while the OCR engine briefly loses punctuation or digits.
+                detectedAmount = amountStabilizer.update(candidate, SystemClock.elapsedRealtime())
                 lastDetectionMillis = SystemClock.elapsedRealtime()
                 cameraMessage = null
             } else if (SystemClock.elapsedRealtime() - lastDetectionMillis > 1800L) {
@@ -237,6 +243,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
                             cameraMessage = "The camera image could not be captured."
                         } else {
                             photoBitmap = frame
+                            amountStabilizer.reset()
                             detectedAmount = null
                             cameraMessage = "Analyzing photo on this device …"
                             val requestId = ++photoRequestId
@@ -263,6 +270,7 @@ fun CameraConvertScreen(vm: MainViewModel) {
                     photoRequestId++
                     photoBitmap = null
                     detectedAmount = null
+                    amountStabilizer.reset()
                     cameraMessage = "Photo discarded. Live recognition continues."
                 }) { Text("Discard photo") }
             }
@@ -314,6 +322,7 @@ private fun CurrencyPicker(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
                 val matches = currencies.filter { currency ->
+                    // Search both the visible title and subtitle so users can find a currency by code or alias.
                     currency.id.contains(query, ignoreCase = true) ||
                         currency.name.contains(query, ignoreCase = true) ||
                         currency.subtitle.contains(query, ignoreCase = true)
@@ -347,19 +356,33 @@ private fun CurrencyPicker(
  * Price labels often print these cents above the baseline without a visible dot or comma, so the
  * horizontal gap and relative text-box size/height provide punctuation evidence missing in OCR.
  */
-private fun findElevatedCentCandidates(result: com.google.mlkit.vision.text.Text): List<String> {
-    data class DigitBox(val digits: String, val left: Int, val top: Int, val right: Int, val bottom: Int) {
+private fun findElevatedCentCandidates(result: com.google.mlkit.vision.text.Text): List<ReconstructedAmount> {
+    data class DigitBox(
+        val digits: String,
+        val context: String,
+        val left: Int,
+        val top: Int,
+        val right: Int,
+        val bottom: Int,
+    ) {
         val height: Int get() = bottom - top
     }
 
-    // Work within a visual text block, where neighboring boxes are more likely to belong together.
+    // Keep geometric matches inside one ML Kit block so unrelated shelf labels cannot be combined.
     return result.textBlocks.flatMap { block ->
-        val boxes = block.lines.flatMap { line -> line.elements }.mapNotNull { element ->
-            val box = element.boundingBox ?: return@mapNotNull null
-            val digits = element.text.trim().filter(Char::isDigit)
-            // Keep only compact numeric elements; words and long product codes are not price parts.
-            if (digits.isEmpty() || digits.length > 3 || box.height() <= 0) return@mapNotNull null
-            DigitBox(digits, box.left, box.top, box.right, box.bottom)
+        val lines = block.lines
+        val boxes = lines.flatMapIndexed { lineIndex, line ->
+            line.elements.mapNotNull { element ->
+                val box = element.boundingBox ?: return@mapNotNull null
+                // Require a purely numeric OCR token: stripping punctuation here could turn `1,` into `1`.
+                val digits = element.text.trim()
+                if (!digits.matches(Regex("\\d{1,3}")) || box.height() <= 0) return@mapNotNull null
+                // Include nearby line text because a REWE label may put “Preis” on a neighboring baseline.
+                val nearbyContext = lines.withIndex()
+                    .filter { (index, nearby) -> kotlin.math.abs(index - lineIndex) <= 1 }
+                    .joinToString(" ") { it.value.text }
+                DigitBox(digits, "$nearbyContext ${block.text}", box.left, box.top, box.right, box.bottom)
+            }
         }
 
         boxes.flatMap { whole ->
@@ -370,15 +393,24 @@ private fun findElevatedCentCandidates(result: com.google.mlkit.vision.text.Text
                     if (whole === cents || cents.digits.length != 2) return@mapNotNull null
                     val horizontalGap = cents.left - whole.right
                     val raisedBy = whole.bottom - cents.bottom
-                    val likelySuperscript = cents.height <= whole.height * 0.88f &&
-                        raisedBy >= whole.height * 0.08f &&
-                        horizontalGap >= -cents.height * 0.35f &&
-                        horizontalGap <= whole.height * 0.9f
-                    if (likelySuperscript) "${whole.digits}.${cents.digits}" else null
+                    val raisedAmount = whole.top - cents.top
+                    // Raised cents should be visibly smaller, above the main baseline, and close to its right edge.
+                    val likelySuperscript = cents.height <= whole.height * 0.82f &&
+                        raisedBy >= whole.height * 0.10f &&
+                        raisedAmount <= whole.height * 0.55f &&
+                        horizontalGap >= -cents.height * 0.25f &&
+                        horizontalGap <= whole.height * 1.15f
+                    if (likelySuperscript) {
+                        ReconstructedAmount(
+                            text = "${whole.digits}.${cents.digits}",
+                            context = "${whole.context} ${cents.context}",
+                            confidence = if (whole.context.contains(Regex("Preis|price|€", RegexOption.IGNORE_CASE))) 75 else 55,
+                        )
+                    } else null
                 }
             }
         }
-    }.distinct()
+    }.distinctBy { it.text }
 }
 
 /**
@@ -503,6 +535,7 @@ private fun CameraPreview(
         onDispose {
             active.set(false)
             activeCamera = null
+            // Unbind only the provider created for this lifecycle effect; the analyzer executor is disposed separately.
             cameraProvider?.unbindAll()
         }
     }
