@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.TextUnit
 /** Composition-wide language code read by [LocalizedText] and locale-aware formatting helpers. */
 val LocalAppLanguage = staticCompositionLocalOf { "en" }
 
+// These base tables translate the most common labels; less common locales are layered on below.
 /** Main German message table; untranslated strings fall back to their English source text. */
 private val german = mapOf(
     "Convert" to "Umrechnen", "Favorites" to "Favoriten", "Rate history" to "Kursverlauf", "Camera converter" to "Kamera-Umrechner", "Choose currencies" to "Währungen auswählen", "Custom currencies" to "Eigene Währungen", "Fan currencies" to "Fan-Währungen", "Settings" to "Einstellungen",
@@ -133,6 +134,7 @@ fun LocalizedText(
     val language = LocalAppLanguage.current
     // Some strings include live values (for example a date or rate), so they are handled as prefixes below.
     // Exact translations are looked up by their English source text; unknown text safely stays readable in English.
+    // Handle dynamic phrases first because their values (currency codes, dates, or percentages) vary at runtime.
     val translated = when {
         text == "Quick amounts" -> quickAmountTranslations[language] ?: text
         text == "Other" && language == "de" -> "Sonstiges"
@@ -168,6 +170,7 @@ fun LocalizedText(
         language == "es" && text.contains(" decrease over ") -> text.replace(" decrease over ", " descenso en ").replace("day", "día").replace("week", "semana").replace("month", "mes").replace("year", "año")
         (language == "zh" || language == "ja") && text.contains(" increase over ") -> text.replace(" increase over ", if (language == "zh") "上涨（" else "上昇（").replace("day", "日").replace("week", if (language == "zh") "周" else "週間").replace("month", if (language == "zh") "个月" else "か月").replace("year", "年") + if (language == "zh") "）" else "）"
         (language == "zh" || language == "ja") && text.contains(" decrease over ") -> text.replace(" decrease over ", if (language == "zh") "下跌（" else "下落（").replace("day", "日").replace("week", if (language == "zh") "周" else "週間").replace("month", if (language == "zh") "个月" else "か月").replace("year", "年") + "）"
+        // Static labels then use the most specific table available; unknown keys remain readable as English.
         else -> moreLanguageTranslations[language]?.get(text)
             ?: additionalTranslations[language]?.get(text)
             ?: when (language) {

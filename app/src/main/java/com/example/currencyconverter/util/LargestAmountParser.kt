@@ -17,13 +17,16 @@ fun findLargestAmount(text: String, elevatedCentCandidates: List<ReconstructedAm
     // Keep OCR lines separate so a date or weight next to a price cannot become its decimal part.
     val lines = text.lineSequence().toList()
     val candidates = lines.flatMapIndexed { index, line ->
+        // Nearby lines can carry a € sign or a word such as "Preis" even if the number is alone.
         val context = listOfNotNull(lines.getOrNull(index - 1), line, lines.getOrNull(index + 1)).joinToString(" ")
+        // Normal OCR is parsed per line; reconstructed candidates are added only once below.
         val textCandidates = amountPattern.findAll(line).map { Candidate(it.value, context, 0) }
         // Reconstructed candidates are scored once, with their own geometry and label context.
         val candidatesForLine = if (index == 0) textCandidates + elevatedCentCandidates.map {
             Candidate(it.text, it.context, it.confidence)
         } else textCandidates
         candidatesForLine.mapNotNull { candidate ->
+            // Normalize first so validation and scoring use one consistent decimal representation.
             val rawCandidate = candidate.text
             val normalized = normalizeRecognizedNumber(rawCandidate) ?: return@mapNotNull null
             val digits = normalized.count(Char::isDigit)
@@ -35,6 +38,7 @@ fun findLargestAmount(text: String, elevatedCentCandidates: List<ReconstructedAm
                 Regex("\\b(EUR|USD|GBP|CHF)\\b", RegexOption.IGNORE_CASE).containsMatchIn(candidate.context)
             val hasPriceLabel = Regex("\\b(Preis|price|amount|total)\\b", RegexOption.IGNORE_CASE).containsMatchIn(candidate.context)
             val hasDecimal = normalized.contains('.')
+            // Price labels and currency symbols carry more weight than digit count or punctuation alone.
             val score = (if (hasPriceLabel) 100 else 0) +
                 (if (hasCurrency) 40 else 0) +
                 (if (hasDecimal) 20 else 0) +
@@ -47,8 +51,10 @@ fun findLargestAmount(text: String, elevatedCentCandidates: List<ReconstructedAm
     return candidates.maxWithOrNull(compareBy<ScoredAmount> { it.score }.thenBy { it.amount.value })?.amount
 }
 
-/** Internal OCR candidate paired with its relevance score; only the best candidate is returned. */
+/** Parsed amount and ranking score; the score itself is only used to choose a result. */
 private data class ScoredAmount(val amount: DetectedAmount, val score: Int)
+
+/** Raw OCR candidate before normalization, paired with nearby evidence and optional geometry confidence. */
 private data class Candidate(val text: String, val context: String, val confidence: Int)
 
 /**
@@ -65,6 +71,7 @@ class AmountStabilizer(private val confirmationWindowMs: Long = 1_500L) {
     /** Returns the stable value to display, or null until a changed reading is confirmed. */
     fun update(candidate: DetectedAmount, nowMillis: Long): DetectedAmount {
         val current = displayed
+        // The first reading is useful immediately; a stable repeat also clears any stale pending value.
         if (current == null || sameAmount(current, candidate)) {
             displayed = candidate
             clearPending()
@@ -78,6 +85,7 @@ class AmountStabilizer(private val confirmationWindowMs: Long = 1_500L) {
             return displayed ?: candidate
         }
 
+        // Require a second observation inside a short window before accepting a completely different number.
         if (pending?.display == candidate.display && nowMillis - pendingAt <= confirmationWindowMs) {
             pendingHits++
         } else {
@@ -98,8 +106,10 @@ class AmountStabilizer(private val confirmationWindowMs: Long = 1_500L) {
         clearPending()
     }
 
+    /** Numeric equality avoids treating harmless differences in display formatting as a new reading. */
     private fun sameAmount(first: DetectedAmount, second: DetectedAmount) = first.value == second.value
 
+    /** Detects OCR adding/removing punctuation while leaving the same digit sequence. */
     private fun sameDigitsDifferentDecimal(first: DetectedAmount, second: DetectedAmount): Boolean {
         val firstDigits = first.display.filter(Char::isDigit)
         val secondDigits = second.display.filter(Char::isDigit)
@@ -114,6 +124,7 @@ class AmountStabilizer(private val confirmationWindowMs: Long = 1_500L) {
             (isPriceDecimal(second) && first.display.none { it == '.' } && first.value == second.value * 100.0)
     }
 
+    /** Clears the confirmation candidate after acceptance or when changing camera modes. */
     private fun clearPending() {
         pending = null
         pendingHits = 0
@@ -127,6 +138,7 @@ private val amountPattern = Regex("""(?<![\p{L}\d])\d+(?:[ \t.,]\d+)*(?![\p{L}\d
 
 /** Converts an OCR number to a dot-decimal form while preserving likely cents and groupings. */
 private fun normalizeRecognizedNumber(raw: String): String? {
+    // Trim outer OCR padding first; internal spaces may still signal a faint missing separator.
     val trimmed = raw.trim()
     // When a separator vanished entirely, a short two-digit tail is the common cents pattern.
     val spaceSeparated = trimmed.split(Regex("[ \\t]+"))
@@ -140,6 +152,7 @@ private fun normalizeRecognizedNumber(raw: String): String? {
     val value = trimmed.filterNot(Char::isWhitespace)
     val commaIndex = value.lastIndexOf(',')
     val dotIndex = value.lastIndexOf('.')
+    // A bare digit string stays an integer; cents are inferred only if OCR left separator evidence.
     if (commaIndex < 0 && dotIndex < 0) return value.filter(Char::isDigit).ifEmpty { null }
 
     // With both comma and dot present, the final punctuation is decimal; earlier ones group thousands.
@@ -157,6 +170,7 @@ private fun normalizeRecognizedNumber(raw: String): String? {
         pieces.first().length in 1..3 && pieces.first() != "0"
     if (isGroupedInteger) return pieces.joinToString("").filter(Char::isDigit)
 
+    // Use the final punctuation as the decimal mark and reject incomplete values such as `12,`.
     val lastSeparator = value.lastIndexOf(separator)
     val whole = value.substring(0, lastSeparator).filter(Char::isDigit)
     val decimals = value.substring(lastSeparator + 1).filter(Char::isDigit)

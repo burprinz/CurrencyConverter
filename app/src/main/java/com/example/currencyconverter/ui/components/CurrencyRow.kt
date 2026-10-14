@@ -64,6 +64,7 @@ fun CurrencyRow(
     selectedColor: Int? = null,
     onColorSelected: (Int?) -> Unit = {}
 ) {
+    // This menu is local to the card; the selected palette index is owned and persisted by the view model.
     var paletteOpen by remember { mutableStateOf(false) }
     /** One named swatch; its position in [palette] is the value saved by the view model. */
     data class PaletteColor(val name: String, val color: Color)
@@ -75,10 +76,12 @@ fun CurrencyRow(
         PaletteColor("Lilac", Color(0xFFBA68C8)), PaletteColor("Rose", Color(0xFFF06292))
     )
     // Derive a subdued card fill and a stronger outline from one accent while preserving text contrast.
+    // Estimate theme brightness to choose fill/outline strengths that remain visible in both modes.
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val accent = selectedColor?.let(palette::getOrNull)?.color
     val cardBackground = accent?.let { if (dark) Color(red = it.red * .20f, green = it.green * .20f, blue = it.blue * .20f) else it.copy(alpha = .14f) }
     val cardBorder = accent?.let { if (dark) it.copy(red = it.red * .75f, green = it.green * .75f, blue = it.blue * .75f) else it.copy(red = it.red * .72f, green = it.green * .72f, blue = it.blue * .72f) }
+    // Show the same precision the rounding controls use; ISO currencies can have zero or three decimals.
     val roundingDigits = if (currency.kind == CurrencyKind.REAL) {
         runCatching { java.util.Currency.getInstance(currency.id).defaultFractionDigits }
             .getOrNull()?.takeIf { it >= 0 } ?: 2
@@ -106,6 +109,7 @@ fun CurrencyRow(
                     )
                 }
                 DropdownMenu(expanded = paletteOpen, onDismissRequest = { paletteOpen = false }) {
+                    // Null is a real option: it removes the saved accent and restores the theme surface color.
                     DropdownMenuItem(text = { Text("Default") }, onClick = { onColorSelected(null); paletteOpen = false })
                     palette.forEachIndexed { index, swatch ->
                         DropdownMenuItem(

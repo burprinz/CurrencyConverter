@@ -54,6 +54,7 @@ enum class Screen(val title: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrencyApp(vm: MainViewModel = viewModel()) {
+    // Provide language outside the theme/navigation shell so every nested destination sees one value.
     ProvideAppLanguage(vm.language) {
         AppTheme(vm.themeMode) { CurrencyAppContent(vm) }
     }
@@ -67,6 +68,7 @@ fun CurrencyApp(vm: MainViewModel = viewModel()) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CurrencyAppContent(vm: MainViewModel) {
+    // Save destination across rotations/process recreation; drawer expansion remains transient UI state.
     var screen by rememberSaveable { mutableStateOf(Screen.LIST) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -85,6 +87,7 @@ private fun CurrencyAppContent(vm: MainViewModel) {
                         label = { Text(s.title) },
                         selected = s == screen,
                         onClick = {
+                            // Update content immediately, then close the modal drawer in the Compose coroutine scope.
                             screen = s
                             scope.launch { drawerState.close() }
                         },
@@ -121,6 +124,7 @@ private fun CurrencyAppContent(vm: MainViewModel) {
             }
         ) { padding ->
             Box(Modifier.padding(padding).fillMaxSize()) {
+                // Each destination receives shared state/actions; screen-specific temporary state stays local.
                 when (screen) {
                     Screen.LIST -> ConverterListScreen(vm, favoritesOnly = false, onSelectCurrencies = { screen = Screen.SELECT })
                     Screen.FAVORITES -> ConverterListScreen(vm, favoritesOnly = true, onSelectCurrencies = { screen = Screen.SELECT })

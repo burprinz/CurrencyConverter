@@ -371,6 +371,7 @@ private fun findElevatedCentCandidates(result: com.google.mlkit.vision.text.Text
     // Keep geometric matches inside one ML Kit block so unrelated shelf labels cannot be combined.
     return result.textBlocks.flatMap { block ->
         val lines = block.lines
+        // Bounding boxes are kept with their text context so geometry can infer cents and scoring can identify price labels.
         val boxes = lines.flatMapIndexed { lineIndex, line ->
             line.elements.mapNotNull { element ->
                 val box = element.boundingBox ?: return@mapNotNull null
@@ -386,6 +387,7 @@ private fun findElevatedCentCandidates(result: com.google.mlkit.vision.text.Text
         }
 
         boxes.flatMap { whole ->
+            // Every possible whole-number token is compared with nearby two-digit tokens as a possible cents suffix.
             if (whole.digits.length !in 1..3) {
                 emptyList()
             } else {

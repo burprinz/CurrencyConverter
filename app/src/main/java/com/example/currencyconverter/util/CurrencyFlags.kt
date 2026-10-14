@@ -37,7 +37,9 @@ private val preferredRegions = mapOf(
  * and currencies without a defensible country association fall back to a globe symbol.
  */
 fun currencyFlag(currencyCode: String): String {
+    // Locale APIs are case-sensitive in some environments, so normalize ISO codes consistently first.
     val code = currencyCode.uppercase(Locale.ROOT)
+    // Shared currencies need a representative region; otherwise search ISO country/currency pairs.
     val region = preferredRegions[code] ?: Locale.getISOCountries().firstOrNull { countryCode ->
         runCatching {
             Currency.getInstance(Locale("", countryCode)).currencyCode == code
@@ -49,5 +51,6 @@ fun currencyFlag(currencyCode: String): String {
 
 /** Converts a two-letter ISO region code to the pair of Unicode regional-indicator code points. */
 private fun String.toFlagEmoji(): String = map { character ->
+    // Regional indicator symbols begin at the code point for letter A and advance alphabetically.
     String(Character.toChars(0x1F1E6 + character.code - 'A'.code))
 }.joinToString("")

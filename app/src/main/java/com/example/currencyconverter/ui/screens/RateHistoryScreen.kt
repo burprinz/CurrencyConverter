@@ -81,6 +81,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
     var reload by remember { mutableStateOf(0) }
     val today = remember { apiDate(Calendar.getInstance(TimeZone.getTimeZone("UTC"))) }
     val start = when (period) {
+        // The selected period is converted to a concrete date because the endpoint accepts date ranges.
         RatePeriod.DAY -> shiftedApiDate(today, Calendar.DAY_OF_MONTH, -1)
         RatePeriod.WEEK -> shiftedApiDate(today, Calendar.DAY_OF_MONTH, -7)
         RatePeriod.MONTH -> shiftedApiDate(today, Calendar.MONTH, -1)
@@ -103,6 +104,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
 
     // The effect key list makes each visible selection a new request and cancels the previous one.
     LaunchedEffect(base, quote, period, reload, currencyCodes) {
+        // Identical currencies have no meaningful exchange-rate history and are rejected before the request.
         if (base == quote) {
             points = emptyList()
             error = false
@@ -117,6 +119,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
         loading = true
         error = false
         try {
+            // All-time queries are grouped monthly to keep the graph responsive with a long date range.
             points = HistoricalRatesApi.fetch(base, quote, start, today, monthly = period == RatePeriod.ALL)
             error = points.isEmpty()
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -125,6 +128,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
             points = emptyList()
             error = true
         } finally {
+            // Runs on success, failure, and cancellation so the UI never stays stuck in loading state.
             loading = false
         }
     }
@@ -179,6 +183,7 @@ fun RateHistoryScreen(vm: MainViewModel) {
 
 /** Calculates a range boundary using UTC so API date ranges do not shift with local time zones. */
 private fun shiftedApiDate(date: String, field: Int, amount: Int): String {
+    // Parse and adjust in UTC because the server's historical dates are calendar dates, not local times.
     val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
     calendar.time = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
@@ -189,6 +194,7 @@ private fun shiftedApiDate(date: String, field: Int, amount: Int): String {
 
 /** Formats a calendar date in the YYYY-MM-DD format expected by the history endpoint. */
 private fun apiDate(calendar: Calendar): String =
+    // The API requires a stable machine format independent of app language and device region.
     SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }.format(calendar.time)
@@ -208,6 +214,7 @@ private fun SearchCurrencyPicker(label: String, currencies: List<Currency>, sele
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 440.dp)) {
                 OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Search currency") }, singleLine = true, modifier = Modifier.padding(8.dp))
+                // Limit the menu to a practical number of rows while still matching both code and localized name.
                 currencies.filter { it.id.contains(query, true) || it.name.contains(query, true) }.take(80).forEach { currency ->
                     DropdownMenuItem(
                         text = { Row(verticalAlignment = Alignment.CenterVertically) { CurrencyFlag(currency); Text("${currency.id} · ${currency.name}", modifier = Modifier.padding(start = 8.dp)) } },
@@ -235,6 +242,7 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
         Canvas(Modifier.fillMaxWidth().weight(1f).pointerInput(points) {
                 awaitPointerEventScope {
                     while (true) {
+                        // Consume graph gestures here so horizontal scrubbing is not interpreted by parent navigation.
                         val event = awaitPointerEvent(PointerEventPass.Initial)
                         event.changes.forEach { it.consume() }
                         when (event.type) {
@@ -254,6 +262,7 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
                 if (points.isEmpty()) return@Canvas
                 val min = points.minOf { it.rate }
                 val max = points.maxOf { it.rate }
+                // Flat histories still need a visible scale; provide a small range around the shared value.
                 val range = (max - min).takeIf { it > 0.0 } ?: max * 0.01
                 val left = 64.dp.toPx()
                 val right = 10.dp.toPx()
@@ -276,8 +285,10 @@ private fun RateChart(points: List<HistoricalRatePoint>, base: String, quote: St
                     native.drawText(value, left - paint.measureText(value) - 8.dp.toPx(), y + paint.textSize / 3f, paint)
                 }
                 if (points.size == 1) {
+                    // A one-point range cannot form a path, so place one marker in the center of the plot.
                     drawCircle(color, 5.dp.toPx(), Offset(left + width / 2f, top + height / 2f))
                 } else {
+                    // Map chronological order uniformly across x and the observed min/max into y.
                     val path = Path()
                     points.forEachIndexed { index, point ->
                         val x = left + width * index / (points.size - 1).toFloat()

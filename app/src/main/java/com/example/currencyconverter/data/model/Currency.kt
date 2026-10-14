@@ -15,9 +15,11 @@ enum class CurrencyKind { REAL, CUSTOM, FUN }
  * uniformly while the converter still knows whether to use an API rate or a fixed estimate.
  */
 data class Currency(
+    // id is the persistence key; names and descriptions may be edited or translated independently.
     val id: String,
     val name: String,
     val kind: CurrencyKind,
+    // For CUSTOM/FUN entries, one unit equals factor units of this real reference currency.
     val refCode: String? = null,
     val factor: Double = 1.0,
     val description: String = "",
@@ -25,5 +27,6 @@ data class Currency(
 ) {
     /** Short secondary label: ISO code for real money, or the configured reference value otherwise. */
     val subtitle: String
+        // A common label format lets currency cards and chooser rows display the same model consistently.
         get() = if (kind == CurrencyKind.REAL) id else "1 = ${formatAmount(factor)} $refCode"
 }

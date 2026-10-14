@@ -125,6 +125,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                             val matchingCurrencies = vm.realCurrencies.filter { currency ->
+                                // Restrict custom-currency references to actual API-backed currencies.
                                 (currency.id.contains(refQuery, ignoreCase = true) || currency.name.contains(refQuery, ignoreCase = true)) &&
                                     currency.id in refOptions
                             }
@@ -153,9 +154,11 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = {
                         // The screen handles presentation feedback; saveCustom owns business validation.
+                        // Remember whether this is a creation because only a new currency is auto-selected.
                         val wasNewCurrency = editingId == null
                         val result = vm.saveCustom(editingId, name, refCode, parseAmount(factorText))
                         if (result == null) {
+                            // Clear the form only after the view model confirms a successful save.
                             resetForm()
                             successMessage = if (wasNewCurrency) {
                                 "Currency added and selected for conversion."
@@ -200,6 +203,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
                     Text(c.subtitle, style = MaterialTheme.typography.bodySmall)
                 }
                 IconButton(onClick = {
+                    // Copy the saved model into the form; keep editing local until the user confirms Save.
                     editingId = c.id
                     name = c.name
                     refCode = c.refCode ?: "USD"
@@ -222,6 +226,7 @@ fun AddCurrencyScreen(vm: MainViewModel, onGoToConverter: () -> Unit) {
             text = { Text("‘${c.name}’ will be deleted.") },
             confirmButton = {
                 TextButton(onClick = {
+                    // A deleted currency cannot remain half-edited in the form or in the conversion list.
                     if (editingId == c.id) resetForm()
                     vm.deleteCustom(c.id)
                     pendingDelete = null

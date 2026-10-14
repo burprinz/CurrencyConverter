@@ -18,8 +18,10 @@ import com.example.currencyconverter.util.currencyFlag
  */
 @Composable
 fun CurrencyFlag(currency: Currency) {
+    // Fictional and user-defined currencies do not have a country, so they intentionally have no flag.
     if (currency.kind != CurrencyKind.REAL) return
 
+    // Remembering by code avoids repeating the locale-to-region lookup on ordinary recompositions.
     val flag = remember(currency.id) { currencyFlag(currency.id) }
     Text(
         text = flag,

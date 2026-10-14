@@ -37,6 +37,7 @@ import java.util.Locale
 @Composable
 fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    // Use the chosen app language to format the timestamp, not the phone's unrelated default locale.
     val locale = Locale.forLanguageTag(LocalAppLanguage.current)
     val last = if (lastUpdateMillis > 0) {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale).format(Date(lastUpdateMillis))
@@ -70,6 +71,7 @@ fun StatusBar(state: FetchState, lastUpdateMillis: Long, onRefresh: () -> Unit) 
                 )
             }
             IconButton(
+                // Disable duplicate requests while the existing refresh coroutine is still running.
                 onClick = onRefresh,
                 enabled = state != FetchState.LOADING,
                 modifier = Modifier.size(36.dp)

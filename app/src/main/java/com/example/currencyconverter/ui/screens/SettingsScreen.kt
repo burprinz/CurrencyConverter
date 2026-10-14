@@ -36,6 +36,7 @@ private data class LanguageOption(val code: String, val nativeName: String, val 
 @Composable
 fun SettingsScreen(vm: MainViewModel) {
     var languageQuery by rememberSaveable { mutableStateOf("") }
+    // Native names and aliases travel together so search can accept either spelling without changing the label.
     val languages = listOf(
         LanguageOption("en", "English", "🇬🇧", listOf("English", "Englisch", "Inglés")),
         LanguageOption("de", "Deutsch", "🇩🇪", listOf("Deutsch", "German", "Alemán")),
@@ -62,6 +63,7 @@ fun SettingsScreen(vm: MainViewModel) {
     )
     // Search accepts the localized name, the language's own name, and common translations of its name.
     val visibleLanguages = languages.filter { option ->
+        // Search aliases are intentionally separate from the displayed native name (e.g. German finds Deutsch).
         languageQuery.isBlank() || option.searchNames.any { it.contains(languageQuery.trim(), ignoreCase = true) } ||
             option.nativeName.contains(languageQuery.trim(), ignoreCase = true)
     }
@@ -72,6 +74,7 @@ fun SettingsScreen(vm: MainViewModel) {
     ) {
         Text("Theme", style = MaterialTheme.typography.titleLarge)
         listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
+            // Clicking either the row or radio button changes the same persisted preference.
             Row(Modifier.fillMaxWidth().clickable { vm.changeThemeMode(value) }, verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = vm.themeMode == value, onClick = { vm.changeThemeMode(value) })
                 Text(label)
@@ -86,6 +89,7 @@ fun SettingsScreen(vm: MainViewModel) {
             modifier = Modifier.fillMaxWidth()
         )
         visibleLanguages.forEach { language ->
+            // A tap changes the global app language; the list stays in each language's own name for easy recognition.
             Row(Modifier.fillMaxWidth().clickable { vm.changeLanguage(language.code) }, verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = vm.language == language.code, onClick = { vm.changeLanguage(language.code) })
                 Text(language.flag, modifier = Modifier.padding(end = 10.dp))

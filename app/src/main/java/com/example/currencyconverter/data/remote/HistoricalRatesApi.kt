@@ -17,16 +17,19 @@ data class HistoricalRatePoint(val date: String, val rate: Double)
 object HistoricalRatesApi {
     /** Downloads a date range; [monthly] asks the API to group older all-time results by month. */
     suspend fun fetch(base: String, quote: String, from: String, to: String, monthly: Boolean = false): List<HistoricalRatePoint> = withContext(Dispatchers.IO) {
+        // Frankfurter uses ISO codes and yyyy-MM-dd values; monthly grouping reduces the all-time payload.
         val params = buildString {
             append("base=$base&quotes=$quote&from=$from&to=$to")
             if (monthly) append("&group=month")
         }
         val connection = URL("https://api.frankfurter.dev/v2/rates?$params").openConnection() as HttpURLConnection
         try {
+            // Historical queries may take longer than current-rate requests, so use a slightly longer read timeout.
             connection.connectTimeout = 10000
             connection.readTimeout = 15000
             if (connection.responseCode != 200) throw IllegalStateException("HTTP ${connection.responseCode}")
             val array = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
+            // Ignore malformed rows individually so one bad observation does not discard the usable chart data.
             (0 until array.length()).mapNotNull { index ->
                 val row = array.optJSONObject(index) ?: return@mapNotNull null
                 val date = row.optString("date").takeIf { it.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) } ?: return@mapNotNull null

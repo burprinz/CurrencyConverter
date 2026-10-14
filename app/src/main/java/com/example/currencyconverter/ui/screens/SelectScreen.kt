@@ -60,6 +60,7 @@ fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     val customShown = customOpen || q.isNotEmpty()
 
     Column(Modifier.fillMaxSize()) {
+    // The instruction card remains above results so first-time users always see what selection means.
     Card(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -83,6 +84,7 @@ fun SelectScreen(vm: MainViewModel, onDone: () -> Unit) {
     LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = 16.dp)) {
         item { SectionHeader("Currencies (${real.size})", realShown) { realOpen = !realOpen } }
         if (realShown) {
+            // Empty sections explain whether the issue is missing rates or simply no added fan currencies.
             if (real.isEmpty()) {
                 item { Hint("No currencies available. Check your connection and refresh rates.") }
             } else {
@@ -125,6 +127,7 @@ private fun SectionHeader(title: String, expanded: Boolean, onClick: () -> Unit)
 /** One currency choice with its current selection and favorite state. */
 @Composable
 private fun SelectRow(vm: MainViewModel, c: Currency) {
+    // Read selection/favorite state from the same source used by the converter to keep both screens in sync.
     val selected = c.id in vm.selectedIds
     val favorite = c.id in vm.favoriteIds
     Row(

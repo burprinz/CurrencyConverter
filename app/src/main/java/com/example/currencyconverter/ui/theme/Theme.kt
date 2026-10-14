@@ -37,12 +37,14 @@ private val DarkColors = darkColorScheme(
  */
 @Composable
 fun AppTheme(themeMode: String = "system", content: @Composable () -> Unit) {
+    // Resolve the system preference only when the user has not chosen an explicit light/dark mode.
     val dark = when (themeMode) {
         "light" -> false
         "dark" -> true
         else -> isSystemInDarkTheme()
     }
     MaterialTheme(
+        // Every screen reads from this shared scheme rather than hard-coding surface and text colors.
         colorScheme = if (dark) DarkColors else LightColors,
         content = content
     )

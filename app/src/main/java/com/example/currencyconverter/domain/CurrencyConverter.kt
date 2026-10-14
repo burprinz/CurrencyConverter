@@ -13,8 +13,10 @@ class CurrencyConverter(private val rates: Map<String, Double>) {
 
     /** Returns how many units of [c] equal one USD; invalid or missing rates make conversion unavailable. */
     private fun unitsPerUsd(c: Currency): Double? = when (c.kind) {
+        // API rates already use the common USD base; reject zero and invalid server values.
         CurrencyKind.REAL -> rates[c.id]?.takeIf { it.isFinite() && it > 0.0 }
         else -> {
+            // A custom/fan factor means `1 custom = factor * refCode`; convert that reference into USD units.
             val refRate = c.refCode?.let { rates[it] }?.takeIf { it.isFinite() && it > 0.0 }
             if (refRate == null || !c.factor.isFinite() || c.factor <= 0.0) null
             else (refRate / c.factor).takeIf { it.isFinite() && it > 0.0 }

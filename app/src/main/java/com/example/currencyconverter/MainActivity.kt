@@ -9,6 +9,7 @@ import com.example.currencyconverter.ui.CurrencyApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Compose owns the full screen tree; the activity only provides Android's window and lifecycle.
         setContent {
             CurrencyApp()
         }

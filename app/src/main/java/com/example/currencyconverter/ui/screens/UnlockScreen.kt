@@ -43,6 +43,7 @@ import com.example.currencyconverter.ui.MainViewModel
 fun UnlockScreen(vm: MainViewModel) {
     var showInfo by rememberSaveable { mutableStateOf(false) }
     var selectedCategory by rememberSaveable { mutableStateOf("All") }
+    // Keep category names in sync with the built-in catalog's category field.
     val categories = listOf("All", "Anime", "Movies & books", "Series", "Video games", "Other")
     // Keep the canonical catalog intact; only the displayed list responds to the active filter.
     val filteredCurrencies = if (selectedCategory == "All") FunCurrencies.all else FunCurrencies.all.filter { it.category == selectedCategory }
@@ -79,6 +80,7 @@ fun UnlockScreen(vm: MainViewModel) {
             }
         }
         items(filteredCurrencies, key = { it.id }) { c ->
+            // Unlock state is per stable catalog ID, so labels or descriptions can change without losing access.
             val unlocked = c.id in vm.unlockedIds
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),

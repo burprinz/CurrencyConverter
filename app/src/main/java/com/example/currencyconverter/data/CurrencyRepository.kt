@@ -13,12 +13,15 @@ enum class FetchState { IDLE, LOADING, SUCCESS, OFFLINE }
  */
 class CurrencyRepository(private val storage: AppStorage) {
 
+    /** Exposes the persisted timestamp without letting screens depend directly on storage. */
     val lastUpdateMillis: Long get() = storage.lastUpdateMillis
 
+    /** Parses cached JSON through the same validator used for fresh server responses. */
     fun cachedRates(): Map<String, Double> = RatesApi.parseRates(storage.ratesJson)
 
     /** Fetches fresh rates, persists the raw response for reuse, and propagates network/HTTP errors. */
     suspend fun refreshRates(): Map<String, Double> {
+        // Persist only after fetchLatest has returned a complete, validated response.
         val result = RatesApi.fetchLatest()
         storage.ratesJson = result.rawJson
         storage.lastUpdateMillis = System.currentTimeMillis()

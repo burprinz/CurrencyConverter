@@ -7,7 +7,9 @@ import kotlin.math.abs
 
 /** Formats an amount compactly (max. 2/4/6 decimals, trailing zeros removed). */
 fun formatAmount(value: Double): String {
+    // Avoid rendering special floating-point values as user-facing numbers.
     if (value.isNaN() || value.isInfinite()) return ""
+    // Larger amounts need fewer digits; small fractions keep extra precision for fan-currency estimates.
     val pattern = when {
         abs(value) >= 100 -> "%.2f"
         abs(value) >= 1 -> "%.4f"
@@ -19,10 +21,12 @@ fun formatAmount(value: Double): String {
 
 /** Accepts both decimal separators; parsing rejects NaN and infinity so they never reach the UI. */
 fun parseAmount(text: String): Double? =
+    // The app accepts either locale-style comma or programming-style dot as a decimal mark.
     text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
 
 /** Keeps numeric input editable while allowing at most one decimal separator and retaining its style. */
 fun sanitizeAmountInput(text: String): String {
+    // Keep the first decimal separator the user typed and discard any later punctuation or non-digit characters.
     val separatorIndex = text.indexOfFirst { it == '.' || it == ',' }
     if (separatorIndex < 0) return text.filter(Char::isDigit)
 
@@ -37,6 +41,7 @@ fun roundClean(value: Double): Double =
 
 /** Human-readable currency name for an ISO code in [language]; falls back to the code if unknown. */
 fun currencyDisplayName(code: String, language: String = "en"): String = try {
+    // Java's locale data supplies translated currency names without maintaining another name catalog.
     val locale = Locale.forLanguageTag(language)
     java.util.Currency.getInstance(code).getDisplayName(locale)
 } catch (e: Exception) {

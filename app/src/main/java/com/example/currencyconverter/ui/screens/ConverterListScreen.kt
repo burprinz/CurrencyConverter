@@ -35,6 +35,7 @@ fun ConverterListScreen(
     favoritesOnly: Boolean,
     onSelectCurrencies: () -> Unit
 ) {
+    // The favorite destination is a filtered view of the same selected list, not a second selection store.
     val visible = vm.selectedCurrencies.filter { !favoritesOnly || it.id in vm.favoriteIds }
 
     // Keep first-use guidance in place of an empty list so the primary action is immediately visible.
@@ -72,6 +73,7 @@ fun ConverterListScreen(
             }
         }
         items(visible, key = { it.id }) { c ->
+            // Values and callbacks come from the shared view model so all cards use one conversion source.
             CurrencyRow(
                 currency = c,
                 value = vm.displayValue(c),

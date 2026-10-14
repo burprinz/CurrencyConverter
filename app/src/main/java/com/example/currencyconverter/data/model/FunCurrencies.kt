@@ -7,6 +7,7 @@ package com.example.currencyconverter.data.model
  * them as custom currencies, which keeps IDs stable across app releases.
  */
 object FunCurrencies {
+    // The UI filters this shared list by category; stable IDs are persisted when users unlock entries.
     val all: List<Currency> = listOf(
         // 1 Berry = 1 JPY
         Currency("fun_berries", "Berries", CurrencyKind.FUN, "JPY", 1.0, "From One Piece", "Anime"),
