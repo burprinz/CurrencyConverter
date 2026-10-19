@@ -24,9 +24,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.currencyconverter.ui.MainViewModel
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.util.Log
+import androidx.compose.material3.Button
+import androidx.compose.ui.platform.LocalContext
+import com.example.currencyconverter.AdMobState
+import com.google.android.ump.UserMessagingPlatform
 
 /** One selectable locale, its representative flag, and alternate names accepted by search. */
 private data class LanguageOption(val code: String, val nativeName: String, val flag: String, val searchNames: List<String>)
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
+}
 
 /**
  * Theme and language preferences plus short notes about the app's rate sources.
@@ -35,6 +51,8 @@ private data class LanguageOption(val code: String, val nativeName: String, val 
  */
 @Composable
 fun SettingsScreen(vm: MainViewModel) {
+    val context = LocalContext.current
+
     var languageQuery by rememberSaveable { mutableStateOf("") }
     // Native names and aliases travel together so search can accept either spelling without changing the label.
     val languages = listOf(
@@ -72,6 +90,50 @@ fun SettingsScreen(vm: MainViewModel) {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
+        Text(
+            "Privacy",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Button(
+            onClick = {
+                val activity = context.findActivity()
+
+                if (activity == null) {
+                    Log.e("AdMobConsent", "Activity not found.")
+                } else {
+                    UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
+                        if (formError != null) {
+                            Log.e(
+                                "AdMobConsent",
+                                "Privacy options error: " +
+                                        "${formError.errorCode} ${formError.message}"
+                            )
+                        } else {
+                            Log.d(
+                                "AdMobConsent",
+                                "Privacy options form closed."
+                            )
+                        }
+
+                        // Den aktuellen Einwilligungsstatus erneut prüfen.
+                        val consentInformation =
+                            UserMessagingPlatform.getConsentInformation(activity)
+
+                        val adsAllowed = consentInformation.canRequestAds()
+                        AdMobState.updateAdsReady(adsAllowed)
+
+                        Log.d(
+                            "AdMobConsent",
+                            "Ads allowed after privacy change: $adsAllowed"
+                        )
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Datenschutzeinstellungen")
+        }
         Text("Theme", style = MaterialTheme.typography.titleLarge)
         listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
             // Clicking either the row or radio button changes the same persisted preference.
